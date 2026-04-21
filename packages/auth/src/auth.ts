@@ -17,16 +17,61 @@ function normalizeEnvValue(value: string | undefined) {
   return trimmed;
 }
 
-function getAllowedDemoEmails() {
-  const raw = normalizeEnvValue(process.env.AUTH_DEMO_EMAIL);
-  if (!raw) {
-    return [];
+async function ensureUserWorkspaceMembership(args: {
+  userId: string;
+}) {
+  const [existingMembership] = await db
+    .select({ id: schema.memberships.id })
+    .from(schema.memberships)
+    .where(eq(schema.memberships.userId, args.userId))
+    .limit(1);
+
+  if (existingMembership) {
+    return;
   }
 
-  return raw
-    .split(",")
-    .map((email) => normalizeEnvValue(email).toLowerCase())
-    .filter(Boolean);
+  let [workspace] = await db
+    .select({
+      tenantId: schema.workspaces.tenantId,
+      workspaceId: schema.workspaces.id,
+    })
+    .from(schema.workspaces)
+    .orderBy(asc(schema.workspaces.createdAt))
+    .limit(1);
+
+  if (!workspace) {
+    const [tenant] = await db.insert(schema.tenants).values({
+      name: "QuickLaunch Demo",
+      slug: "quicklaunch-demo",
+      plan: "team",
+      status: "active",
+      settingsJson: {},
+    }).returning({
+      id: schema.tenants.id,
+    });
+
+    const [createdWorkspace] = await db.insert(schema.workspaces).values({
+      tenantId: tenant.id,
+      name: "Ops Command",
+      slug: "ops-command",
+      description: "Central workspace for project visibility, meeting follow-through, and decision tracking.",
+      visibility: "private",
+      createdBy: args.userId,
+    }).returning({
+      tenantId: schema.workspaces.tenantId,
+      workspaceId: schema.workspaces.id,
+    });
+
+    workspace = createdWorkspace;
+  }
+
+  await db.insert(schema.memberships).values({
+    tenantId: workspace.tenantId,
+    workspaceId: workspace.workspaceId,
+    userId: args.userId,
+    role: "owner",
+    isDefaultWorkspace: true,
+  }).onConflictDoNothing();
 }
 
 async function resolveMembershipByEmail(email: string) {
@@ -69,13 +114,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           credentials?.name?.toString().trim() ||
           normalizeEnvValue(process.env.AUTH_DEMO_NAME) ||
           "QuickLaunch Demo User";
-        const allowedEmails = getAllowedDemoEmails();
 
         if (!email) {
-          return null;
-        }
-
-        if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
           return null;
         }
 
@@ -114,6 +154,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
       if (!upserted) return false;
+
+      await ensureUserWorkspaceMembership({
+        userId: upserted.id,
+      });
+
       return true;
     },
     async jwt({ token, user }) {
