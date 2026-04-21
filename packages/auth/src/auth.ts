@@ -4,6 +4,31 @@ import Credentials from "next-auth/providers/credentials";
 import { asc, desc, eq } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
 
+function normalizeEnvValue(value: string | undefined) {
+  const trimmed = value?.trim() ?? "";
+
+  if (
+    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+
+  return trimmed;
+}
+
+function getAllowedDemoEmails() {
+  const raw = normalizeEnvValue(process.env.AUTH_DEMO_EMAIL);
+  if (!raw) {
+    return [];
+  }
+
+  return raw
+    .split(",")
+    .map((email) => normalizeEnvValue(email).toLowerCase())
+    .filter(Boolean);
+}
+
 async function resolveMembershipByEmail(email: string) {
   const [member] = await db
     .select({
@@ -40,10 +65,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         const email = credentials?.email?.toString().trim().toLowerCase();
-        const name = credentials?.name?.toString().trim() || process.env.AUTH_DEMO_NAME || "QuickLaunch Demo User";
-        const allowedEmail = (process.env.AUTH_DEMO_EMAIL || "demo@example.com").toLowerCase();
+        const name =
+          credentials?.name?.toString().trim() ||
+          normalizeEnvValue(process.env.AUTH_DEMO_NAME) ||
+          "QuickLaunch Demo User";
+        const allowedEmails = getAllowedDemoEmails();
 
-        if (!email || email !== allowedEmail) {
+        if (!email) {
+          return null;
+        }
+
+        if (allowedEmails.length > 0 && !allowedEmails.includes(email)) {
           return null;
         }
 
