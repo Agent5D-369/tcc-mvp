@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";--> statement-breakpoint
+CREATE EXTENSION IF NOT EXISTS "vector";--> statement-breakpoint
 CREATE TYPE "public"."approval_mode_t" AS ENUM('manual', 'suggest_only', 'auto_safe');--> statement-breakpoint
 CREATE TYPE "public"."artifact_type_t" AS ENUM('markdown', 'json', 'csv', 'doc', 'image', 'plan', 'summary');--> statement-breakpoint
 CREATE TYPE "public"."author_type_t" AS ENUM('user', 'agent', 'system');--> statement-breakpoint
