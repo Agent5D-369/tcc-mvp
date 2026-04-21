@@ -12,15 +12,18 @@ export default function SignInPage() {
     e.preventDefault();
     setError(null);
 
-    const result = await signIn("credentials", {
-      email,
-      name,
-      redirect: false,
-      callbackUrl: "/",
+    const response = await fetch("/api/demo-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, name }),
     });
 
-    if (result?.error) {
-      setError(result.error);
+    const result = await response.json();
+
+    if (!response.ok) {
+      setError(result.error || "Demo sign-in failed");
       return;
     }
 

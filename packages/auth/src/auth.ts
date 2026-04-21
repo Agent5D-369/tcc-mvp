@@ -17,7 +17,7 @@ function normalizeEnvValue(value: string | undefined) {
   return trimmed;
 }
 
-async function ensureUserWorkspaceMembership(args: {
+export async function ensureUserWorkspaceMembership(args: {
   userId: string;
 }) {
   const [existingMembership] = await db
@@ -74,7 +74,7 @@ async function ensureUserWorkspaceMembership(args: {
   }).onConflictDoNothing();
 }
 
-async function resolveMembershipByEmail(email: string) {
+export async function resolveMembershipByEmail(email: string) {
   const [member] = await db
     .select({
       userId: schema.users.id,
