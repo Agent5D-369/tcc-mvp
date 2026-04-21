@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@workspace-kit/db": ["packages/db/src/index.ts"],
+      "@workspace-kit/db/*": ["packages/db/src/*"],
+      "@workspace-kit/shared/*": ["packages/shared/src/*"],
+      "@workspace-kit/home": ["packages/home/src/index.ts"],
+      "@workspace-kit/home/*": ["packages/home/src/*"],
+      "@workspace-kit/auth": ["packages/auth/src/index.ts"],
+      "@workspace-kit/auth/*": ["packages/auth/src/*"],
+      "@workspace-kit/tenancy/*": ["packages/tenancy/src/*"],
+      "@workspace-kit/projects": ["packages/projects/src/index.ts"],
+      "@workspace-kit/projects/*": ["packages/projects/src/*"],
+      "@workspace-kit/ai-core": ["packages/ai-core/src/index.ts"],
+      "@workspace-kit/ai-core/*": ["packages/ai-core/src/*"]
+    },
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowJs": false,
+    "resolveJsonModule": true,
+    "incremental": true,
+    "plugins": [{ "name": "next" }]
+  },
+  "include": ["apps", "packages", "scripts", "drizzle.config.ts", "auth.ts"]
+}
