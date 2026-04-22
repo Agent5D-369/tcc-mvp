@@ -1,7 +1,7 @@
 import { auth } from "./auth";
 import type { AppSession } from "./types";
 import { readDemoSessionToken } from "./demoSession";
-import { resolveMembershipByEmail } from "./auth";
+import { resolveMembershipByEmail } from "./membership";
 
 async function getDemoSession(): Promise<AppSession | null> {
   const demoSession = await readDemoSessionToken();

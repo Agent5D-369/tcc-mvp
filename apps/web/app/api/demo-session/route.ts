@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
-import { ensureUserWorkspaceMembership, resolveMembershipByEmail } from "@workspace-kit/auth";
+import { ensureUserWorkspaceMembership, resolveMembershipByEmail } from "@workspace-kit/auth/membership";
 import { clearDemoSessionCookie, createDemoSessionToken, setDemoSessionCookie } from "@workspace-kit/auth/demoSession";
 
 const demoSessionSchema = z.object({
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    console.log("[demo-session] request received");
     const body = demoSessionSchema.parse(await req.json());
     const email = body.email.trim().toLowerCase();
     const name = body.name.trim();
@@ -38,10 +39,14 @@ export async function POST(req: NextRequest) {
         fullName: schema.users.fullName,
       });
 
+    console.log("[demo-session] user upserted", { userId: user?.id, email });
+
     await ensureUserWorkspaceMembership({ userId: user.id });
+    console.log("[demo-session] membership ensured", { userId: user.id });
 
     const membership = await resolveMembershipByEmail(email);
     if (!membership?.workspaceId) {
+      console.error("[demo-session] membership lookup returned no workspace", { email });
       return NextResponse.json({ error: "No workspace membership available" }, { status: 500 });
     }
 
@@ -54,12 +59,14 @@ export async function POST(req: NextRequest) {
     });
 
     await setDemoSessionCookie(token);
+    console.log("[demo-session] cookie written", { userId: user.id, workspaceId: membership.workspaceId });
 
     return NextResponse.json({ ok: true, url: "/" });
   } catch (error) {
+    console.error("[demo-session] failed", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 400 },
+      { status: error instanceof z.ZodError ? 400 : 500 },
     );
   }
 }
@@ -68,4 +75,3 @@ export async function DELETE() {
   await clearDemoSessionCookie();
   return NextResponse.json({ ok: true });
 }
-
