@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
 import type { HomePayload } from "@workspace-kit/shared/contracts/home";
 
@@ -138,6 +138,26 @@ export async function getWorkspaceHome(args: {
     .orderBy(desc(schema.meetingNotes.meetingAt))
     .limit(5);
 
+  const openTasks = await db
+    .select({
+      id: schema.tasks.id,
+      title: schema.tasks.title,
+      priority: schema.tasks.priority,
+      dueAt: schema.tasks.dueAt,
+      projectName: schema.projects.name,
+      statusKind: schema.taskStatuses.kind,
+    })
+    .from(schema.tasks)
+    .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
+    .leftJoin(schema.projects, eq(schema.projects.id, schema.tasks.projectId))
+    .where(and(
+      eq(schema.tasks.tenantId, tenantId),
+      eq(schema.tasks.workspaceId, workspace.id),
+      sql`${schema.taskStatuses.kind} is null or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')`,
+    ))
+    .orderBy(asc(schema.tasks.dueAt), desc(schema.tasks.updatedAt))
+    .limit(6);
+
   const metrics = {
     activeProjects: activeProjectsCount?.value ?? 0,
     openTasks: taskMetrics?.openTasks ?? 0,
@@ -183,6 +203,11 @@ export async function getWorkspaceHome(args: {
     recentMeetings: recentMeetings.map((meeting) => ({
       ...meeting,
       meetingAt: meeting.meetingAt ? meeting.meetingAt.toISOString() : null,
+    })),
+    openTasks: openTasks.map((task) => ({
+      ...task,
+      dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+      statusKind: task.statusKind ?? null,
     })),
     attentionItems,
     commandBrief: {

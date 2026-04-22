@@ -38,6 +38,14 @@ export type HomePayload = {
     summary: string | null;
     projectName: string | null;
   }>;
+  openTasks: Array<{
+    id: string;
+    title: string;
+    priority: "low" | "medium" | "high" | "urgent";
+    dueAt: string | null;
+    projectName: string | null;
+    statusKind: "todo" | "in_progress" | "blocked" | "done" | "canceled" | null;
+  }>;
   attentionItems: string[];
   commandBrief: {
     summary: string;

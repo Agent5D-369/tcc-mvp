@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
+import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string; projectSlug: string }>;
@@ -27,8 +29,21 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
   const session = await getSession();
   const route = await params;
 
-  if (!session?.activeTenantId) {
+  if (!session?.activeTenantId || !session.activeWorkspaceId) {
     throw new Error("Unauthorized");
+  }
+
+  const activeRoute = await getActiveWorkspaceRoute({
+    tenantId: session.activeTenantId,
+    workspaceId: session.activeWorkspaceId,
+  });
+
+  if (!activeRoute) {
+    throw new Error("Active workspace route not found");
+  }
+
+  if (activeRoute.tenantSlug !== route.tenantSlug || activeRoute.workspaceSlug !== route.workspaceSlug) {
+    redirect(`/${activeRoute.tenantSlug}/${activeRoute.workspaceSlug}`);
   }
 
   const data = await getProjectOverview({

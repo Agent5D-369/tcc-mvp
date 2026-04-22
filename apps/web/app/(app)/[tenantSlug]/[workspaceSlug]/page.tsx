@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getWorkspaceHome } from "@workspace-kit/home";
+import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string }>;
@@ -23,8 +25,21 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
   const session = await getSession();
   const route = await params;
 
-  if (!session?.activeTenantId) {
+  if (!session?.activeTenantId || !session.activeWorkspaceId) {
     throw new Error("Unauthorized");
+  }
+
+  const activeRoute = await getActiveWorkspaceRoute({
+    tenantId: session.activeTenantId,
+    workspaceId: session.activeWorkspaceId,
+  });
+
+  if (!activeRoute) {
+    throw new Error("Active workspace route not found");
+  }
+
+  if (activeRoute.tenantSlug !== route.tenantSlug || activeRoute.workspaceSlug !== route.workspaceSlug) {
+    redirect(`/${activeRoute.tenantSlug}/${activeRoute.workspaceSlug}`);
   }
 
   const data = await getWorkspaceHome({
@@ -137,6 +152,29 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
 
         <aside className="stack">
           <section className="card">
+            <h2>Open tasks</h2>
+            {data.openTasks.length ? (
+              <ul className="list">
+                {data.openTasks.map((task) => (
+                  <li key={task.id}>
+                    <strong>{task.title}</strong>
+                    <div className="meta-row">
+                      <span className="badge badge-neutral">{task.priority}</span>
+                      {task.statusKind ? <span className="badge badge-neutral">{task.statusKind}</span> : null}
+                    </div>
+                    <div className="muted">
+                      {task.projectName ? `${task.projectName} • ` : ""}
+                      {task.dueAt ? `Due ${new Date(task.dueAt).toLocaleDateString()}` : "No due date"}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-note">No open tasks in this workspace.</p>
+            )}
+          </section>
+
+          <section className="card">
             <h2>Attention items</h2>
             {data.attentionItems.length ? (
               <ul className="list">
@@ -170,4 +208,3 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
     </main>
   );
 }
-

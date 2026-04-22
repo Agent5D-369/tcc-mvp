@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
@@ -16,13 +16,30 @@ type RouteParams = {
 
 export async function GET(_: NextRequest, { params }: RouteParams) {
   try {
-    await resolveTenantContext();
+    const ctx = await resolveTenantContext();
     const { threadId } = await params;
+
+    const [thread] = await db
+      .select({ id: schema.threads.id })
+      .from(schema.threads)
+      .where(and(
+        eq(schema.threads.id, threadId),
+        eq(schema.threads.tenantId, ctx.tenantId),
+        eq(schema.threads.workspaceId, ctx.workspaceId),
+      ))
+      .limit(1);
+
+    if (!thread) {
+      return NextResponse.json({ error: "Thread not found" }, { status: 404 });
+    }
 
     const messages = await db
       .select()
       .from(schema.messages)
-      .where(eq(schema.messages.threadId, threadId))
+      .where(and(
+        eq(schema.messages.threadId, threadId),
+        eq(schema.messages.tenantId, ctx.tenantId),
+      ))
       .orderBy(asc(schema.messages.createdAt));
 
     return NextResponse.json({ messages });
@@ -42,6 +59,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const result = await completeThreadMessage({
       tenantId: ctx.tenantId,
+      workspaceId: ctx.workspaceId,
       threadId,
       userId: ctx.userId,
       content: body.content,

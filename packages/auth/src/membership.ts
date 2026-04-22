@@ -82,3 +82,19 @@ export async function resolveMembershipByEmail(email: string) {
 
   return member ?? null;
 }
+
+export async function resolveMembershipByUserId(userId: string) {
+  const [member] = await db
+    .select({
+      userId: schema.users.id,
+      fullName: schema.users.fullName,
+      tenantId: schema.memberships.tenantId,
+      workspaceId: schema.memberships.workspaceId,
+    })
+    .from(schema.memberships)
+    .innerJoin(schema.users, eq(schema.users.id, schema.memberships.userId))
+    .where(eq(schema.memberships.userId, userId))
+    .orderBy(desc(schema.memberships.isDefaultWorkspace), asc(schema.memberships.joinedAt));
+
+  return member ?? null;
+}

@@ -1,7 +1,15 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { db, schema } from "@workspace-kit/db";
-import { ensureUserWorkspaceMembership, resolveMembershipByEmail } from "./membership";
+import {
+  ensureUserWorkspaceMembership,
+  resolveMembershipByEmail,
+  resolveMembershipByUserId,
+} from "./membership";
+
+function shouldAutoProvisionMemberships() {
+  return process.env.AUTH_AUTO_PROVISION_MEMBERSHIPS === "true";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -44,9 +52,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (!upserted) return false;
 
-      await ensureUserWorkspaceMembership({
-        userId: upserted.id,
-      });
+      let membership = await resolveMembershipByUserId(upserted.id);
+      if (!membership) {
+        if (!shouldAutoProvisionMemberships()) {
+          return false;
+        }
+
+        await ensureUserWorkspaceMembership({
+          userId: upserted.id,
+        });
+        membership = await resolveMembershipByUserId(upserted.id);
+      }
+
+      if (!membership?.workspaceId) {
+        return false;
+      }
 
       return true;
     },
