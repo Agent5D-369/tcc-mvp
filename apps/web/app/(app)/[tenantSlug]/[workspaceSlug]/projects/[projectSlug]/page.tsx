@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { CreateMilestoneCard } from "./create-milestone-card";
 import { CreateTaskCard } from "./create-task-card";
 import { TaskStatusList } from "./task-status-list";
 
@@ -100,6 +101,7 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
 
       <section className="project-grid" style={{ marginBottom: 20 }}>
         <CreateTaskCard projectId={data.project.id} />
+        <CreateMilestoneCard projectId={data.project.id} />
 
         <section className="card">
           <h2>Next actions</h2>
@@ -107,23 +109,6 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
             <TaskStatusList tasks={data.nextActions} statuses={data.availableStatuses} />
           ) : (
             <p className="empty-note">No open next actions found.</p>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Milestones</h2>
-          {data.milestones.length ? (
-            <ul className="list">
-              {data.milestones.map((milestone) => (
-                <li key={milestone.id}>
-                  <strong>{milestone.name}</strong>
-                  <div className="muted">{milestone.description || "No milestone description yet."}</div>
-                  {milestone.dueAt ? <div className="muted">Due {new Date(milestone.dueAt).toLocaleDateString()}</div> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No milestones tracked yet.</p>
           )}
         </section>
 
@@ -145,6 +130,23 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
       </section>
 
       <section className="project-grid">
+        <section className="card">
+          <h2>Milestones</h2>
+          {data.milestones.length ? (
+            <ul className="list">
+              {data.milestones.map((milestone) => (
+                <li key={milestone.id}>
+                  <strong>{milestone.name}</strong>
+                  <div className="muted">{milestone.description || "No milestone description yet."}</div>
+                  {milestone.dueAt ? <div className="muted">Due {new Date(milestone.dueAt).toLocaleDateString()}</div> : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="empty-note">No milestones tracked yet.</p>
+          )}
+        </section>
+
         <section className="card">
           <h2>Recent meetings</h2>
           {data.recentMeetings.length ? (
