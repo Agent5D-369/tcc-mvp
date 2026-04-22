@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { CreateDecisionCard } from "./create-decision-card";
 import { CreateMilestoneCard } from "./create-milestone-card";
 import { CreateTaskCard } from "./create-task-card";
 import { TaskStatusList } from "./task-status-list";
@@ -102,6 +103,7 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
       <section className="project-grid" style={{ marginBottom: 20 }}>
         <CreateTaskCard projectId={data.project.id} />
         <CreateMilestoneCard projectId={data.project.id} />
+        <CreateDecisionCard projectId={data.project.id} />
 
         <section className="card">
           <h2>Next actions</h2>
@@ -119,7 +121,14 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
               {data.decisions.map((decision) => (
                 <li key={decision.id}>
                   <strong>{decision.title}</strong>
+                  <div className="meta-row">
+                    <span className={getBadgeClass(decision.status)}>{decision.status}</span>
+                    {decision.decidedAt ? (
+                      <span className="badge badge-neutral">{new Date(decision.decidedAt).toLocaleDateString()}</span>
+                    ) : null}
+                  </div>
                   <div className="muted">{decision.decisionText}</div>
+                  {decision.context ? <div className="muted">{decision.context}</div> : null}
                 </li>
               ))}
             </ul>

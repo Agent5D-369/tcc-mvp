@@ -50,6 +50,7 @@ export async function getProjectOverview(args: {
     .select({
       id: schema.decisionLog.id,
       title: schema.decisionLog.title,
+      context: schema.decisionLog.context,
       decisionText: schema.decisionLog.decisionText,
       status: schema.decisionLog.status,
       decidedAt: schema.decisionLog.decidedAt,
