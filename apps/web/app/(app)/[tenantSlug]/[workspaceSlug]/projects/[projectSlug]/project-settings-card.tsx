@@ -20,6 +20,7 @@ type ProjectSettingsCardProps = {
 
 export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsCardProps) {
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(project.name);
   const [summary, setSummary] = useState(project.summary || "");
   const [status, setStatus] = useState(project.status);
@@ -76,6 +77,7 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
         return;
       }
 
+      setIsEditing(false);
       router.refresh();
     });
   }
@@ -108,73 +110,108 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
     <section className="card">
       <div className="card-header-row">
         <h2>Project settings</h2>
+        <button
+          type="button"
+          className="button-secondary"
+          onClick={() => {
+            setError(null);
+            setIsEditing((value) => !value);
+          }}
+        >
+          {isEditing ? "Close" : "Edit"}
+        </button>
       </div>
-      <form action={onSubmit} className="form-grid">
-        <label className="field">
-          <span className="field-label">Project name</span>
-          <input name="name" value={name} onChange={(event) => setName(event.target.value)} />
-        </label>
-        <label className="field">
-          <span className="field-label">Summary</span>
-          <textarea
-            name="summary"
-            value={summary}
-            onChange={(event) => setSummary(event.target.value)}
-            rows={4}
-            placeholder="State the outcome, scope, and why this project matters."
-          />
-        </label>
-        <div className="form-split">
-          <label className="field">
-            <span className="field-label">Status</span>
-            <select name="status" value={status} onChange={(event) => setStatus(event.target.value)}>
-              <option value="draft">draft</option>
-              <option value="active">active</option>
-              <option value="paused">paused</option>
-              <option value="completed">completed</option>
-              <option value="archived">archived</option>
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Health</span>
-            <select name="health" value={health} onChange={(event) => setHealth(event.target.value)}>
-              <option value="green">green</option>
-              <option value="yellow">yellow</option>
-              <option value="red">red</option>
-              <option value="unknown">unknown</option>
-            </select>
-          </label>
+
+      <div className="stack compact-stack">
+        <div className="record-summary-grid">
+          <div>
+            <div className="field-label">Project name</div>
+            <strong>{project.name}</strong>
+          </div>
+          <div>
+            <div className="field-label">Status</div>
+            <span>{project.status}</span>
+          </div>
+          <div>
+            <div className="field-label">Health</div>
+            <span>{project.health}</span>
+          </div>
+          <div>
+            <div className="field-label">Target date</div>
+            <span>{project.targetDate ? new Date(project.targetDate).toLocaleDateString() : "None set"}</span>
+          </div>
         </div>
-        <div className="form-split">
+        <p className="entity-preview">{project.summary || "No project summary yet."}</p>
+      </div>
+
+      {isEditing ? (
+        <form action={onSubmit} className="form-grid section-divider">
           <label className="field">
-            <span className="field-label">Start date</span>
-            <input
-              name="startDate"
-              type="date"
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
+            <span className="field-label">Project name</span>
+            <input name="name" value={name} onChange={(event) => setName(event.target.value)} />
+          </label>
+          <label className="field">
+            <span className="field-label">Summary</span>
+            <textarea
+              name="summary"
+              value={summary}
+              onChange={(event) => setSummary(event.target.value)}
+              rows={4}
+              placeholder="State the outcome, scope, and why this project matters."
             />
           </label>
-          <label className="field">
-            <span className="field-label">Target date</span>
-            <input
-              name="targetDate"
-              type="date"
-              value={targetDate}
-              onChange={(event) => setTargetDate(event.target.value)}
-            />
-          </label>
-        </div>
-        {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
-        <div className="entity-actions">
-          <button className="button-primary" type="submit" disabled={isPending}>
-            {isPending ? "Saving..." : "Save project"}
-          </button>
-          <button className="button-secondary button-danger" type="button" onClick={onArchive} disabled={isPending}>
-            Archive project
-          </button>
-        </div>
-      </form>
+          <div className="form-split">
+            <label className="field">
+              <span className="field-label">Status</span>
+              <select name="status" value={status} onChange={(event) => setStatus(event.target.value)}>
+                <option value="draft">draft</option>
+                <option value="active">active</option>
+                <option value="paused">paused</option>
+                <option value="completed">completed</option>
+                <option value="archived">archived</option>
+              </select>
+            </label>
+            <label className="field">
+              <span className="field-label">Health</span>
+              <select name="health" value={health} onChange={(event) => setHealth(event.target.value)}>
+                <option value="green">green</option>
+                <option value="yellow">yellow</option>
+                <option value="red">red</option>
+                <option value="unknown">unknown</option>
+              </select>
+            </label>
+          </div>
+          <div className="form-split">
+            <label className="field">
+              <span className="field-label">Start date</span>
+              <input
+                name="startDate"
+                type="date"
+                value={startDate}
+                onChange={(event) => setStartDate(event.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">Target date</span>
+              <input
+                name="targetDate"
+                type="date"
+                value={targetDate}
+                onChange={(event) => setTargetDate(event.target.value)}
+              />
+            </label>
+          </div>
+          {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+          <div className="entity-actions">
+            <button className="button-primary" type="submit" disabled={isPending}>
+              {isPending ? "Saving..." : "Save project"}
+            </button>
+            <button className="button-secondary button-danger" type="button" onClick={onArchive} disabled={isPending}>
+              Archive project
+            </button>
+          </div>
+        </form>
+      ) : null}
     </section>
   );
 }

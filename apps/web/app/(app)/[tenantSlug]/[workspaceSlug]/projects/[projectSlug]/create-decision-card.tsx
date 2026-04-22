@@ -6,9 +6,10 @@ import { readApiResult } from "../../../../../lib/read-api-result";
 
 type CreateDecisionCardProps = {
   projectId: string;
+  embedded?: boolean;
 };
 
-export function CreateDecisionCard({ projectId }: CreateDecisionCardProps) {
+export function CreateDecisionCard({ projectId, embedded = false }: CreateDecisionCardProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [context, setContext] = useState("");
@@ -64,8 +65,8 @@ export function CreateDecisionCard({ projectId }: CreateDecisionCardProps) {
     });
   }
 
-  return (
-    <section className="card">
+  const content = (
+    <>
       <h2>Log decision</h2>
       <p className="muted" style={{ marginTop: 8 }}>
         Capture the call so execution, ownership, and audit history stay in the project room.
@@ -114,6 +115,12 @@ export function CreateDecisionCard({ projectId }: CreateDecisionCardProps) {
           {isPending ? "Logging..." : "Log decision"}
         </button>
       </form>
-    </section>
+    </>
   );
+
+  if (embedded) {
+    return <div className="embedded-form">{content}</div>;
+  }
+
+  return <section className="card">{content}</section>;
 }

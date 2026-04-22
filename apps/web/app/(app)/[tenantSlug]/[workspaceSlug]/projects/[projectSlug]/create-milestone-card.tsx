@@ -6,9 +6,10 @@ import { readApiResult } from "../../../../../lib/read-api-result";
 
 type CreateMilestoneCardProps = {
   projectId: string;
+  embedded?: boolean;
 };
 
-export function CreateMilestoneCard({ projectId }: CreateMilestoneCardProps) {
+export function CreateMilestoneCard({ projectId, embedded = false }: CreateMilestoneCardProps) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -55,8 +56,8 @@ export function CreateMilestoneCard({ projectId }: CreateMilestoneCardProps) {
     });
   }
 
-  return (
-    <section className="card">
+  const content = (
+    <>
       <h2>Add milestone</h2>
       <p className="muted" style={{ marginTop: 8 }}>
         Capture the next checkpoint so the project has a visible execution spine.
@@ -90,6 +91,12 @@ export function CreateMilestoneCard({ projectId }: CreateMilestoneCardProps) {
           {isPending ? "Adding..." : "Add milestone"}
         </button>
       </form>
-    </section>
+    </>
   );
+
+  if (embedded) {
+    return <div className="embedded-form">{content}</div>;
+  }
+
+  return <section className="card">{content}</section>;
 }

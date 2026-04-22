@@ -4,12 +4,9 @@ import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { DecisionManagerCard } from "./decision-manager-card";
-import { CreateDecisionCard } from "./create-decision-card";
-import { CreateMeetingCard } from "./create-meeting-card";
-import { CreateMilestoneCard } from "./create-milestone-card";
-import { CreateTaskCard } from "./create-task-card";
 import { MeetingManagerCard } from "./meeting-manager-card";
 import { MilestoneManagerCard } from "./milestone-manager-card";
+import { ProjectCapturePanel } from "./project-capture-panel";
 import { ProjectSettingsCard } from "./project-settings-card";
 import { getBadgeClass } from "./project-room-utils";
 import { TaskManagerCard } from "./task-manager-card";
@@ -46,14 +43,14 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
   });
 
   return (
-    <main className="page-shell">
+    <main className="page-shell app-page-shell">
       <div className="breadcrumbs">
         <Link href={`/${route.tenantSlug}/${route.workspaceSlug}`}>{data.project.workspaceName}</Link>
         <span>/</span>
         <span>{data.project.name}</span>
       </div>
 
-      <section className="hero">
+      <section className="hero hero-compact">
         <div>
           <div className="kicker">Project workspace</div>
           <h1>{data.project.name}</h1>
@@ -95,14 +92,11 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
             <div className="kicker">Capture</div>
             <h2 className="section-title">Add new operating records</h2>
           </div>
-          <p className="empty-note">Capture the next action, milestone, decision, or meeting without leaving the room.</p>
+          <p className="empty-note">Keep capture lightweight. Open one focused form, save, and return to review mode quickly.</p>
         </div>
       </section>
-      <section className="action-grid" style={{ marginBottom: 20 }}>
-        <CreateTaskCard projectId={data.project.id} />
-        <CreateMilestoneCard projectId={data.project.id} />
-        <CreateDecisionCard projectId={data.project.id} />
-        <CreateMeetingCard projectId={data.project.id} />
+      <section style={{ marginBottom: 20 }}>
+        <ProjectCapturePanel projectId={data.project.id} />
       </section>
 
       <section className="section-block">
@@ -111,7 +105,7 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
             <div className="kicker">Operate</div>
             <h2 className="section-title">Run the project</h2>
           </div>
-          <p className="empty-note">Project controls and task operations stay visible. Historical records open only when you need them.</p>
+          <p className="empty-note">Review first. Use edit actions only when you need to change the project or a task.</p>
         </div>
       </section>
       <section className="management-grid" style={{ marginBottom: 20 }}>
@@ -128,7 +122,7 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
             <div className="kicker">Records</div>
             <h2 className="section-title">Review and update project history</h2>
           </div>
-          <p className="empty-note">Use the drawers below to edit milestones, decisions, and meetings one record at a time.</p>
+          <p className="empty-note">Milestones, decisions, and meetings stay compact until you choose Edit.</p>
         </div>
       </section>
       <section className="project-grid" style={{ marginBottom: 20 }}>

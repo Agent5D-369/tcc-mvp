@@ -82,60 +82,68 @@ function MilestoneEditor({
   }
 
   return (
-    <details className="entity-shell">
-      <summary className="entity-summary">
-        <div className="entity-summary-main">
-          <strong>{milestone.name}</strong>
-          <p className="entity-preview">{milestone.description || "No milestone detail yet."}</p>
-          <div className="entity-summary-meta">
-            {milestone.dueAt ? <span>Due {new Date(milestone.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
-          </div>
-        </div>
-        <span className="entity-edit-hint">Edit</span>
-      </summary>
-      <div className="entity-editor">
-        <label className="field">
-          <span className="field-label">Milestone name</span>
-          <input value={name} onChange={(event) => setName(event.target.value)} />
-        </label>
-        <label className="field">
-          <span className="field-label">Description</span>
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            rows={3}
-            placeholder="Capture the checkpoint, dependency, or success criteria."
-          />
-        </label>
-        <label className="field">
-          <span className="field-label">Due date</span>
-          <input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
-        </label>
-        {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
-        <div className="entity-actions">
-          <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
-            {isPending ? "Saving..." : "Save milestone"}
-          </button>
-          <button className="button-secondary button-danger" type="button" onClick={onDelete} disabled={isPending}>
-            Delete
-          </button>
-        </div>
+    <div className="entity-editor section-divider">
+      <label className="field">
+        <span className="field-label">Milestone name</span>
+        <input value={name} onChange={(event) => setName(event.target.value)} />
+      </label>
+      <label className="field">
+        <span className="field-label">Description</span>
+        <textarea
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          rows={3}
+          placeholder="Capture the checkpoint, dependency, or success criteria."
+        />
+      </label>
+      <label className="field">
+        <span className="field-label">Due date</span>
+        <input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
+      </label>
+      {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+      <div className="entity-actions">
+        <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
+          {isPending ? "Saving..." : "Save milestone"}
+        </button>
+        <button className="button-secondary button-danger" type="button" onClick={onDelete} disabled={isPending}>
+          Delete
+        </button>
       </div>
-    </details>
+    </div>
   );
 }
 
 export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   return (
     <section className="card">
       <div className="card-header-row">
-        <h2>Milestone management</h2>
+        <h2>Milestones</h2>
         <span className="muted">{milestones.length} tracked</span>
       </div>
       {milestones.length ? (
-        <div className="stack">
+        <div className="stack compact-stack">
           {milestones.map((milestone) => (
-            <MilestoneEditor key={milestone.id} milestone={milestone} />
+            <div key={milestone.id} className="entity-shell">
+              <div className="entity-summary">
+                <div className="entity-summary-main">
+                  <strong>{milestone.name}</strong>
+                  <p className="entity-preview">{milestone.description || "No milestone detail yet."}</p>
+                  <div className="entity-summary-meta">
+                    {milestone.dueAt ? <span>Due {new Date(milestone.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => setEditingId((current) => current === milestone.id ? null : milestone.id)}
+                >
+                  {editingId === milestone.id ? "Close" : "Edit"}
+                </button>
+              </div>
+              {editingId === milestone.id ? <MilestoneEditor milestone={milestone} /> : null}
+            </div>
           ))}
         </div>
       ) : (

@@ -86,80 +86,88 @@ function DecisionEditor({
   }
 
   return (
-    <details className="entity-shell">
-      <summary className="entity-summary">
-        <div className="entity-summary-main">
-          <div className="meta-row">
-            <strong>{decision.title}</strong>
-            <span className={getBadgeClass(decision.status)}>{decision.status}</span>
-            {decision.decidedAt ? (
-              <span className="badge badge-neutral">{new Date(decision.decidedAt).toLocaleDateString()}</span>
-            ) : null}
-          </div>
-          <p className="entity-preview">{decision.decisionText}</p>
-          <div className="entity-summary-meta">
-            <span>{decision.context || "No decision context yet."}</span>
-          </div>
-        </div>
-        <span className="entity-edit-hint">Edit</span>
-      </summary>
-      <div className="entity-editor">
-        <label className="field">
-          <span className="field-label">Decision title</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} />
-        </label>
-        <label className="field">
-          <span className="field-label">Context</span>
-          <textarea
-            value={context}
-            onChange={(event) => setContext(event.target.value)}
-            rows={3}
-            placeholder="State the trigger, tradeoff, or constraint."
-          />
-        </label>
-        <label className="field">
-          <span className="field-label">Decision</span>
-          <textarea
-            value={decisionText}
-            onChange={(event) => setDecisionText(event.target.value)}
-            rows={4}
-            placeholder="State the decision in concrete terms."
-          />
-        </label>
-        <label className="field">
-          <span className="field-label">Status</span>
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option value="proposed">proposed</option>
-            <option value="accepted">accepted</option>
-            <option value="rejected">rejected</option>
-            <option value="superseded">superseded</option>
-          </select>
-        </label>
-        {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
-        <div className="entity-actions">
-          <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
-            {isPending ? "Saving..." : "Save decision"}
-          </button>
-          <button className="button-secondary button-danger" type="button" onClick={onDelete} disabled={isPending}>
-            Delete
-          </button>
-        </div>
+    <div className="entity-editor section-divider">
+      <label className="field">
+        <span className="field-label">Decision title</span>
+        <input value={title} onChange={(event) => setTitle(event.target.value)} />
+      </label>
+      <label className="field">
+        <span className="field-label">Context</span>
+        <textarea
+          value={context}
+          onChange={(event) => setContext(event.target.value)}
+          rows={3}
+          placeholder="State the trigger, tradeoff, or constraint."
+        />
+      </label>
+      <label className="field">
+        <span className="field-label">Decision</span>
+        <textarea
+          value={decisionText}
+          onChange={(event) => setDecisionText(event.target.value)}
+          rows={4}
+          placeholder="State the decision in concrete terms."
+        />
+      </label>
+      <label className="field">
+        <span className="field-label">Status</span>
+        <select value={status} onChange={(event) => setStatus(event.target.value)}>
+          <option value="proposed">proposed</option>
+          <option value="accepted">accepted</option>
+          <option value="rejected">rejected</option>
+          <option value="superseded">superseded</option>
+        </select>
+      </label>
+      {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+      <div className="entity-actions">
+        <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
+          {isPending ? "Saving..." : "Save decision"}
+        </button>
+        <button className="button-secondary button-danger" type="button" onClick={onDelete} disabled={isPending}>
+          Delete
+        </button>
       </div>
-    </details>
+    </div>
   );
 }
 
 export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   return (
     <section className="card">
       <div className="card-header-row">
-        <h2>Decision management</h2>
+        <h2>Decisions</h2>
         <span className="muted">{decisions.length} tracked</span>
       </div>
       {decisions.length ? (
-        <div className="stack">
+        <div className="stack compact-stack">
           {decisions.map((decision) => (
-            <DecisionEditor key={decision.id} decision={decision} />
+            <div key={decision.id} className="entity-shell">
+              <div className="entity-summary">
+                <div className="entity-summary-main">
+                  <div className="meta-row">
+                    <strong>{decision.title}</strong>
+                    <span className={getBadgeClass(decision.status)}>{decision.status}</span>
+                    {decision.decidedAt ? (
+                      <span className="badge badge-neutral">{new Date(decision.decidedAt).toLocaleDateString()}</span>
+                    ) : null}
+                  </div>
+                  <p className="entity-preview">{decision.decisionText}</p>
+                  <div className="entity-summary-meta">
+                    <span>{decision.context || "No decision context yet."}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => setEditingId((current) => current === decision.id ? null : decision.id)}
+                >
+                  {editingId === decision.id ? "Close" : "Edit"}
+                </button>
+              </div>
+              {editingId === decision.id ? <DecisionEditor decision={decision} /> : null}
+            </div>
           ))}
         </div>
       ) : (

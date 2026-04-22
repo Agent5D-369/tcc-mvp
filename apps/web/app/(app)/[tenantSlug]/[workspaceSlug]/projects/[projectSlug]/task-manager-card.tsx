@@ -99,79 +99,62 @@ function TaskEditor({
   }
 
   return (
-    <details className="entity-shell">
-      <summary className="entity-summary">
-        <div className="entity-summary-main">
-          <div className="meta-row">
-            <strong>{task.title}</strong>
-            <span className={getBadgeClass(task.priority)}>{task.priority}</span>
-            <span className={getBadgeClass(task.statusKind || "neutral")}>{task.statusName || "Unassigned"}</span>
-          </div>
-          <p className="entity-preview">
-            {task.description || "No task detail yet."}
-          </p>
-          <div className="entity-summary-meta">
-            {task.dueAt ? <span>Due {new Date(task.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
-          </div>
-        </div>
-        <span className="entity-edit-hint">Edit</span>
-      </summary>
-
-      <div className="entity-editor">
+    <div className="entity-editor section-divider">
+      <label className="field">
+        <span className="field-label">Task title</span>
+        <input value={title} onChange={(event) => setTitle(event.target.value)} />
+      </label>
+      <label className="field">
+        <span className="field-label">Description</span>
+        <textarea
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          rows={3}
+          placeholder="State the concrete action and expected outcome."
+        />
+      </label>
+      <div className="form-split">
         <label className="field">
-          <span className="field-label">Task title</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} />
-        </label>
-        <label className="field">
-          <span className="field-label">Description</span>
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            rows={3}
-            placeholder="State the concrete action and expected outcome."
-          />
-        </label>
-        <div className="form-split">
-          <label className="field">
-            <span className="field-label">Priority</span>
-            <select value={priority} onChange={(event) => setPriority(event.target.value)}>
-              <option value="low">low</option>
-              <option value="medium">medium</option>
-              <option value="high">high</option>
-              <option value="urgent">urgent</option>
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Due date</span>
-            <input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
-          </label>
-        </div>
-        <label className="field">
-          <span className="field-label">Status</span>
-          <select value={statusId} onChange={(event) => setStatusId(event.target.value)}>
-            <option value="">No status</option>
-            {statuses.map((status) => (
-              <option key={status.id} value={status.id}>
-                {status.name}
-              </option>
-            ))}
+          <span className="field-label">Priority</span>
+          <select value={priority} onChange={(event) => setPriority(event.target.value)}>
+            <option value="low">low</option>
+            <option value="medium">medium</option>
+            <option value="high">high</option>
+            <option value="urgent">urgent</option>
           </select>
         </label>
-        {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
-        <div className="entity-actions">
-          <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
-            {isPending ? "Saving..." : "Save task"}
-          </button>
-          <button className="button-secondary button-danger" type="button" onClick={onDelete} disabled={isPending}>
-            Delete
-          </button>
-        </div>
+        <label className="field">
+          <span className="field-label">Due date</span>
+          <input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
+        </label>
       </div>
-    </details>
+      <label className="field">
+        <span className="field-label">Status</span>
+        <select value={statusId} onChange={(event) => setStatusId(event.target.value)}>
+          <option value="">No status</option>
+          {statuses.map((status) => (
+            <option key={status.id} value={status.id}>
+              {status.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+      <div className="entity-actions">
+        <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
+          {isPending ? "Saving..." : "Save task"}
+        </button>
+        <button className="button-secondary button-danger" type="button" onClick={onDelete} disabled={isPending}>
+          Delete
+        </button>
+      </div>
+    </div>
   );
 }
 
 export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   return (
     <section className="card">
       <div className="card-header-row">
@@ -179,9 +162,31 @@ export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
         <span className="muted">{tasks.length} tracked</span>
       </div>
       {tasks.length ? (
-        <div className="stack">
+        <div className="stack compact-stack">
           {tasks.map((task) => (
-            <TaskEditor key={task.id} task={task} statuses={statuses} />
+            <div key={task.id} className="entity-shell">
+              <div className="entity-summary">
+                <div className="entity-summary-main">
+                  <div className="meta-row">
+                    <strong>{task.title}</strong>
+                    <span className={getBadgeClass(task.priority)}>{task.priority}</span>
+                    <span className={getBadgeClass(task.statusKind || "neutral")}>{task.statusName || "Unassigned"}</span>
+                  </div>
+                  <p className="entity-preview">{task.description || "No task detail yet."}</p>
+                  <div className="entity-summary-meta">
+                    {task.dueAt ? <span>Due {new Date(task.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => setEditingId((current) => current === task.id ? null : task.id)}
+                >
+                  {editingId === task.id ? "Close" : "Edit"}
+                </button>
+              </div>
+              {editingId === task.id ? <TaskEditor task={task} statuses={statuses} /> : null}
+            </div>
           ))}
         </div>
       ) : (

@@ -15,9 +15,10 @@ function slugifyProjectName(value: string) {
 type CreateProjectCardProps = {
   tenantSlug: string;
   workspaceSlug: string;
+  embedded?: boolean;
 };
 
-export function CreateProjectCard({ tenantSlug, workspaceSlug }: CreateProjectCardProps) {
+export function CreateProjectCard({ tenantSlug, workspaceSlug, embedded = false }: CreateProjectCardProps) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [summary, setSummary] = useState("");
@@ -65,8 +66,8 @@ export function CreateProjectCard({ tenantSlug, workspaceSlug }: CreateProjectCa
     });
   }
 
-  return (
-    <section className="card">
+  const content = (
+    <>
       <h2>Create project room</h2>
       <p className="muted" style={{ marginTop: 8 }}>
         Open a new project room for an initiative, rollout, or client engagement.
@@ -100,6 +101,12 @@ export function CreateProjectCard({ tenantSlug, workspaceSlug }: CreateProjectCa
           {isPending ? "Creating..." : "Create project"}
         </button>
       </form>
-    </section>
+    </>
   );
+
+  if (embedded) {
+    return <div className="embedded-form">{content}</div>;
+  }
+
+  return <section className="card">{content}</section>;
 }

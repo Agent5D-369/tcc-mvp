@@ -6,9 +6,10 @@ import { readApiResult } from "../../../../../lib/read-api-result";
 
 type CreateMeetingCardProps = {
   projectId: string;
+  embedded?: boolean;
 };
 
-export function CreateMeetingCard({ projectId }: CreateMeetingCardProps) {
+export function CreateMeetingCard({ projectId, embedded = false }: CreateMeetingCardProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [meetingAt, setMeetingAt] = useState("");
@@ -59,8 +60,8 @@ export function CreateMeetingCard({ projectId }: CreateMeetingCardProps) {
     });
   }
 
-  return (
-    <section className="card">
+  const content = (
+    <>
       <h2>Capture meeting</h2>
       <p className="muted" style={{ marginTop: 8 }}>
         Log the meeting outcome so decisions and follow-up stay tied to the project room.
@@ -109,6 +110,12 @@ export function CreateMeetingCard({ projectId }: CreateMeetingCardProps) {
           {isPending ? "Saving..." : "Save meeting"}
         </button>
       </form>
-    </section>
+    </>
   );
+
+  if (embedded) {
+    return <div className="embedded-form">{content}</div>;
+  }
+
+  return <section className="card">{content}</section>;
 }

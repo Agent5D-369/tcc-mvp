@@ -6,9 +6,10 @@ import { readApiResult } from "../../../../../lib/read-api-result";
 
 type CreateTaskCardProps = {
   projectId: string;
+  embedded?: boolean;
 };
 
-export function CreateTaskCard({ projectId }: CreateTaskCardProps) {
+export function CreateTaskCard({ projectId, embedded = false }: CreateTaskCardProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -59,8 +60,8 @@ export function CreateTaskCard({ projectId }: CreateTaskCardProps) {
     });
   }
 
-  return (
-    <section className="card">
+  const content = (
+    <>
       <h2>Add next action</h2>
       <p className="muted" style={{ marginTop: 8 }}>
         Capture the next concrete task so it shows up in the operating view immediately.
@@ -105,6 +106,12 @@ export function CreateTaskCard({ projectId }: CreateTaskCardProps) {
           {isPending ? "Adding..." : "Add task"}
         </button>
       </form>
-    </section>
+    </>
   );
+
+  if (embedded) {
+    return <div className="embedded-form">{content}</div>;
+  }
+
+  return <section className="card">{content}</section>;
 }
