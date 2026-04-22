@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { readApiResult } from "../../../../../lib/read-api-result";
 
 type CreateTaskCardProps = {
   projectId: string;
@@ -43,7 +44,7 @@ export function CreateTaskCard({ projectId }: CreateTaskCardProps) {
         }),
       });
 
-      const result = await response.json();
+      const result = await readApiResult(response);
 
       if (!response.ok) {
         setError(result.error || "Task creation failed");

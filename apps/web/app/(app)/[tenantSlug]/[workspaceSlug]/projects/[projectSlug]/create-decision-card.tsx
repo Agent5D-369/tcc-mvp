@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { readApiResult } from "../../../../../lib/read-api-result";
 
 type CreateDecisionCardProps = {
   projectId: string;
@@ -48,7 +49,7 @@ export function CreateDecisionCard({ projectId }: CreateDecisionCardProps) {
         }),
       });
 
-      const result = await response.json();
+      const result = await readApiResult(response);
 
       if (!response.ok) {
         setError(result.error || "Decision logging failed");

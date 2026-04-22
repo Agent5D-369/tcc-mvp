@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { readApiResult } from "../../../../../lib/read-api-result";
 
 type CreateMilestoneCardProps = {
   projectId: string;
@@ -40,7 +41,7 @@ export function CreateMilestoneCard({ projectId }: CreateMilestoneCardProps) {
         }),
       });
 
-      const result = await response.json();
+      const result = await readApiResult(response);
 
       if (!response.ok) {
         setError(result.error || "Milestone creation failed");

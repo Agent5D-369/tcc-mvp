@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { readApiResult } from "../../../../../lib/read-api-result";
 
 type TaskOption = {
   id: string;
@@ -60,7 +61,7 @@ export function TaskStatusList({ tasks, statuses }: TaskStatusListProps) {
         body: JSON.stringify({ statusId }),
       });
 
-      const result = await response.json();
+      const result = await readApiResult(response);
 
       if (!response.ok) {
         setError(result.error || "Task update failed");
