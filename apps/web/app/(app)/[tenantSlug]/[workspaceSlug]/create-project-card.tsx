@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useWorkspaceFeedback } from "./workspace-feedback";
 
 function slugifyProjectName(value: string) {
   return value
@@ -20,8 +21,10 @@ type CreateProjectCardProps = {
 
 export function CreateProjectCard({ tenantSlug, workspaceSlug, embedded = false }: CreateProjectCardProps) {
   const router = useRouter();
+  const { pushToast } = useWorkspaceFeedback();
   const [name, setName] = useState("");
   const [summary, setSummary] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -55,12 +58,16 @@ export function CreateProjectCard({ tenantSlug, workspaceSlug, embedded = false 
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.error || "Project creation failed");
+        const message = result.error || "Project creation failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
+      pushToast(`Created project "${nextName.trim()}".`);
       setName("");
       setSummary("");
+      setShowDetails(false);
       router.push(`/${tenantSlug}/${workspaceSlug}/projects/${result.project.slug}`);
       router.refresh();
     });
@@ -70,7 +77,7 @@ export function CreateProjectCard({ tenantSlug, workspaceSlug, embedded = false 
     <>
       <h2>Create project room</h2>
       <p className="muted" style={{ marginTop: 8 }}>
-        Open a new project room for an initiative, rollout, or client engagement.
+        Start with the project name. Add the summary only if it helps the team orient faster.
       </p>
       <form action={onSubmit} className="form-grid">
         <label className="field">
@@ -82,21 +89,25 @@ export function CreateProjectCard({ tenantSlug, workspaceSlug, embedded = false 
             placeholder="Q2 Client Onboarding"
           />
         </label>
-        <label className="field">
-          <span className="field-label">Slug preview</span>
-          <input value={slug || "generated-from-name"} readOnly />
-        </label>
-        <label className="field">
-          <span className="field-label">Summary</span>
-          <textarea
-            name="summary"
-            value={summary}
-            onChange={(event) => setSummary(event.target.value)}
-            placeholder="Short execution brief for the team."
-            rows={4}
-          />
-        </label>
-        {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+        <div className="field-hint-row">
+          <span className="muted">Slug: {slug || "generated from the name"}</span>
+          <button type="button" className="button-secondary inline-quiet-button" onClick={() => setShowDetails((value) => !value)}>
+            {showDetails ? "Hide details" : "Add details"}
+          </button>
+        </div>
+        {showDetails ? (
+          <label className="field">
+            <span className="field-label">Summary</span>
+            <textarea
+              name="summary"
+              value={summary}
+              onChange={(event) => setSummary(event.target.value)}
+              placeholder="Short execution brief for the team."
+              rows={4}
+            />
+          </label>
+        ) : null}
+        {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
         <button className="button-primary" type="submit" disabled={isPending}>
           {isPending ? "Creating..." : "Create project"}
         </button>

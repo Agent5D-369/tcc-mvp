@@ -15,6 +15,10 @@ export type HomePayload = {
     openTasks: number;
     overdueTasks: number;
     decisionsLogged: number;
+    blockedTasks: number;
+    urgentTasks: number;
+    dueSoonTasks: number;
+    unassignedTasks: number;
   };
   activeProjects: Array<{
     id: string;
@@ -44,6 +48,16 @@ export type HomePayload = {
     priority: "low" | "medium" | "high" | "urgent";
     dueAt: string | null;
     projectName: string | null;
+    projectSlug: string | null;
+    statusKind: "todo" | "in_progress" | "blocked" | "done" | "canceled" | null;
+  }>;
+  focusTasks: Array<{
+    id: string;
+    title: string;
+    priority: "low" | "medium" | "high" | "urgent";
+    dueAt: string | null;
+    projectName: string | null;
+    projectSlug: string | null;
     statusKind: "todo" | "in_progress" | "blocked" | "done" | "canceled" | null;
   }>;
   attentionItems: string[];

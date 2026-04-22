@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
+import { useWorkspaceFeedback } from "../../workspace-feedback";
 
 type CreateMilestoneCardProps = {
   projectId: string;
@@ -11,9 +12,11 @@ type CreateMilestoneCardProps = {
 
 export function CreateMilestoneCard({ projectId, embedded = false }: CreateMilestoneCardProps) {
   const router = useRouter();
+  const { pushToast } = useWorkspaceFeedback();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dueAt, setDueAt] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -45,13 +48,17 @@ export function CreateMilestoneCard({ projectId, embedded = false }: CreateMiles
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Milestone creation failed");
+        const message = result.error || "Milestone creation failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
+      pushToast(`Added milestone "${nextName.trim()}".`);
       setName("");
       setDescription("");
       setDueAt("");
+      setShowDetails(false);
       router.refresh();
     });
   }
@@ -60,7 +67,7 @@ export function CreateMilestoneCard({ projectId, embedded = false }: CreateMiles
     <>
       <h2>Add milestone</h2>
       <p className="muted" style={{ marginTop: 8 }}>
-        Capture the next checkpoint so the project has a visible execution spine.
+        Capture the checkpoint first. Add success criteria or timing only when it clarifies execution.
       </p>
       <form action={onSubmit} className="form-grid">
         <label className="field">
@@ -72,21 +79,31 @@ export function CreateMilestoneCard({ projectId, embedded = false }: CreateMiles
             placeholder="Client sign-off complete"
           />
         </label>
-        <label className="field">
-          <span className="field-label">Description</span>
-          <textarea
-            name="description"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            rows={4}
-            placeholder="Optional success criteria, handoff note, or dependency."
-          />
-        </label>
-        <label className="field">
-          <span className="field-label">Due date</span>
-          <input name="dueAt" type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
-        </label>
-        {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+        <div className="field-hint-row">
+          <span className="muted">You can add timing and notes later.</span>
+          <button type="button" className="button-secondary inline-quiet-button" onClick={() => setShowDetails((value) => !value)}>
+            {showDetails ? "Hide details" : "Add details"}
+          </button>
+        </div>
+        {showDetails ? (
+          <>
+            <label className="field">
+              <span className="field-label">Description</span>
+              <textarea
+                name="description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={4}
+                placeholder="Optional success criteria, handoff note, or dependency."
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">Due date</span>
+              <input name="dueAt" type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
+            </label>
+          </>
+        ) : null}
+        {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
         <button className="button-primary" type="submit" disabled={isPending}>
           {isPending ? "Adding..." : "Add milestone"}
         </button>

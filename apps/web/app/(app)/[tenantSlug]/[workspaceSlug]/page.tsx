@@ -47,19 +47,28 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
     tenantId: session.activeTenantId,
     workspaceSlug: route.workspaceSlug,
   });
+  const taskBaseHref = `/${route.tenantSlug}/${route.workspaceSlug}/tasks`;
 
   return (
     <main className="page-shell app-page-shell">
       <section className="hero hero-compact">
         <div>
           <div className="kicker">Workspace home</div>
-          <h1>Today&apos;s operating picture</h1>
+          <h1>Know what needs action next</h1>
           <p>
-            {data.workspace.description || "Run active work, review risk, and move into the right project room with minimal friction."}
+            {data.workspace.description || "Move from review to action quickly, without sorting through every project and record first."}
           </p>
           <div className="meta-row">
             <span className="badge badge-neutral">Tenant: {data.tenant.slug}</span>
             <span className="badge badge-neutral">Workspace: {route.workspaceSlug}</span>
+          </div>
+          <div className="hero-actions">
+            <Link className="button-primary" href={data.metrics.blockedTasks > 0 ? `${taskBaseHref}?filter=blocked` : taskBaseHref}>
+              {data.metrics.blockedTasks > 0 ? "Review blocked work" : "Review open tasks"}
+            </Link>
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/projects`}>
+              Open project rooms
+            </Link>
           </div>
         </div>
 
@@ -97,17 +106,68 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
         <div className="section-heading">
           <div>
             <div className="kicker">Focus now</div>
-            <h2 className="section-title">See what needs action first</h2>
+            <h2 className="section-title">Start with the right queue</h2>
           </div>
-          <p className="empty-note">Start with work that needs a decision, a due date, or a project-room update right now.</p>
+          <p className="empty-note">Choose one lane, clear it, then move into a project room only when deeper context is required.</p>
         </div>
+      </section>
+
+      <section className="triage-grid">
+        <Link className="triage-card" href={`${taskBaseHref}?filter=blocked`}>
+          <span className="metric-label">Blocked</span>
+          <strong>{data.metrics.blockedTasks}</strong>
+          <span className="muted">Resolve stalled work first.</span>
+        </Link>
+        <Link className="triage-card" href={`${taskBaseHref}?filter=urgent`}>
+          <span className="metric-label">High priority</span>
+          <strong>{data.metrics.urgentTasks}</strong>
+          <span className="muted">Protect the most time-sensitive tasks.</span>
+        </Link>
+        <Link className="triage-card" href={`${taskBaseHref}?filter=due-soon`}>
+          <span className="metric-label">Due soon</span>
+          <strong>{data.metrics.dueSoonTasks}</strong>
+          <span className="muted">Catch work before it becomes overdue.</span>
+        </Link>
+        <Link className="triage-card" href={`${taskBaseHref}?filter=unassigned`}>
+          <span className="metric-label">Unassigned</span>
+          <strong>{data.metrics.unassignedTasks}</strong>
+          <span className="muted">Decide where ownership is missing.</span>
+        </Link>
       </section>
 
       <section className="dashboard-grid">
         <div className="stack">
           <section className="card">
-            <h2>Attention items</h2>
-            {data.attentionItems.length ? (
+            <h2>Needs attention now</h2>
+            {data.focusTasks.length ? (
+              <ul className="list">
+                {data.focusTasks.map((task) => (
+                  <li key={task.id}>
+                    <div className="split">
+                      <div>
+                        <strong>{task.title}</strong>
+                        <div className="meta-row">
+                          <span className="badge badge-neutral">{task.priority}</span>
+                          {task.statusKind ? <span className="badge badge-neutral">{task.statusKind}</span> : null}
+                        </div>
+                        <div className="muted">
+                          {task.projectName ? `${task.projectName} • ` : ""}
+                          {task.dueAt ? `Due ${new Date(task.dueAt).toLocaleDateString()}` : "No due date"}
+                        </div>
+                      </div>
+                      {task.projectSlug ? (
+                        <Link
+                          className="button-secondary"
+                          href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${task.projectSlug}`}
+                        >
+                          Open
+                        </Link>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : data.attentionItems.length ? (
               <ul className="list">
                 {data.attentionItems.map((item) => <li key={item}>{item}</li>)}
               </ul>
@@ -117,19 +177,36 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           </section>
 
           <section className="card">
-            <h2>Open tasks</h2>
+            <div className="card-header-row">
+              <h2>Open tasks</h2>
+              <Link className="button-secondary" href={taskBaseHref}>
+                View all
+              </Link>
+            </div>
             {data.openTasks.length ? (
               <ul className="list">
                 {data.openTasks.map((task) => (
                   <li key={task.id}>
-                    <strong>{task.title}</strong>
-                    <div className="meta-row">
-                      <span className="badge badge-neutral">{task.priority}</span>
-                      {task.statusKind ? <span className="badge badge-neutral">{task.statusKind}</span> : null}
-                    </div>
-                    <div className="muted">
-                      {task.projectName ? `${task.projectName} • ` : ""}
-                      {task.dueAt ? `Due ${new Date(task.dueAt).toLocaleDateString()}` : "No due date"}
+                    <div className="split">
+                      <div>
+                        <strong>{task.title}</strong>
+                        <div className="meta-row">
+                          <span className="badge badge-neutral">{task.priority}</span>
+                          {task.statusKind ? <span className="badge badge-neutral">{task.statusKind}</span> : null}
+                        </div>
+                        <div className="muted">
+                          {task.projectName ? `${task.projectName} • ` : ""}
+                          {task.dueAt ? `Due ${new Date(task.dueAt).toLocaleDateString()}` : "No due date"}
+                        </div>
+                      </div>
+                      {task.projectSlug ? (
+                        <Link
+                          className="button-secondary"
+                          href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${task.projectSlug}`}
+                        >
+                          Open
+                        </Link>
+                      ) : null}
                     </div>
                   </li>
                 ))}

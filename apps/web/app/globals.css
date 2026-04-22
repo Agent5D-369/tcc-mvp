@@ -260,7 +260,8 @@ select {
 .action-grid,
 .project-grid,
 .stat-strip,
-.record-list {
+.record-list,
+.triage-grid {
   display: grid;
   gap: 16px;
 }
@@ -269,7 +270,8 @@ select {
 .dashboard-grid,
 .action-grid,
 .project-grid,
-.record-list {
+.record-list,
+.triage-grid {
   grid-template-columns: 1fr;
 }
 
@@ -291,7 +293,8 @@ select {
 .metric-card,
 .card,
 .stat-tile,
-.record-card {
+.record-card,
+.triage-card {
   background: var(--panel);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -299,7 +302,8 @@ select {
 
 .metric-card,
 .card,
-.record-card {
+.record-card,
+.triage-card {
   border-radius: var(--radius-md);
 }
 
@@ -326,6 +330,17 @@ select {
   display: grid;
   gap: 10px;
   align-content: start;
+}
+
+.triage-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.triage-card strong {
+  font-size: 2rem;
+  letter-spacing: -0.04em;
 }
 
 .record-card-copy {
@@ -444,6 +459,19 @@ select {
 .form-grid {
   display: grid;
   gap: 14px;
+}
+
+.field-hint-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.inline-quiet-button {
+  min-height: 38px;
+  padding: 8px 12px;
 }
 
 .field {
@@ -608,6 +636,35 @@ select {
   border-color: rgba(180, 35, 24, 0.18);
 }
 
+.filter-card {
+  margin-bottom: 16px;
+}
+
+.filter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.filter-chip.is-active {
+  background: rgba(15, 118, 110, 0.14);
+  color: var(--accent-strong);
+  border-color: rgba(15, 118, 110, 0.18);
+}
+
 .task-row {
   display: flex;
   justify-content: space-between;
@@ -693,7 +750,8 @@ select {
 
   .metric-grid,
   .action-grid,
-  .record-summary-grid {
+  .record-summary-grid,
+  .triage-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -758,6 +816,10 @@ select {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .triage-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .stat-strip {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -772,7 +834,8 @@ select {
 @media (max-width: 640px) {
   .task-row,
   .topbar,
-  .split {
+  .split,
+  .field-hint-row {
     flex-direction: column;
   }
 

@@ -44,6 +44,7 @@ export async function getWorkspaceHome(args: {
     ));
 
   const nowIso = new Date().toISOString();
+  const dueSoonIso = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
   const [taskMetrics] = await db
     .select({
@@ -61,6 +62,36 @@ export async function getWorkspaceHome(args: {
             ${schema.taskStatuses.kind} is null
             or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')
           )
+        )
+      `.mapWith(Number),
+      blockedTasks: sql<number>`
+        count(*) filter (
+          where ${schema.taskStatuses.kind} = 'blocked'
+        )
+      `.mapWith(Number),
+      urgentTasks: sql<number>`
+        count(*) filter (
+          where ${schema.tasks.priority} in ('high', 'urgent')
+          and (
+            ${schema.taskStatuses.kind} is null
+            or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')
+          )
+        )
+      `.mapWith(Number),
+      dueSoonTasks: sql<number>`
+        count(*) filter (
+          where ${schema.tasks.dueAt} is not null
+          and ${schema.tasks.dueAt} >= ${nowIso}
+          and ${schema.tasks.dueAt} < ${dueSoonIso}
+          and (
+            ${schema.taskStatuses.kind} is null
+            or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')
+          )
+        )
+      `.mapWith(Number),
+      unassignedTasks: sql<number>`
+        count(*) filter (
+          where ${schema.taskStatuses.id} is null
         )
       `.mapWith(Number),
     })
@@ -145,6 +176,7 @@ export async function getWorkspaceHome(args: {
       priority: schema.tasks.priority,
       dueAt: schema.tasks.dueAt,
       projectName: schema.projects.name,
+      projectSlug: schema.projects.slug,
       statusKind: schema.taskStatuses.kind,
     })
     .from(schema.tasks)
@@ -156,13 +188,44 @@ export async function getWorkspaceHome(args: {
       sql`${schema.taskStatuses.kind} is null or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')`,
     ))
     .orderBy(asc(schema.tasks.dueAt), desc(schema.tasks.updatedAt))
-    .limit(6);
+    .limit(8);
+
+  const focusTasks = await db
+    .select({
+      id: schema.tasks.id,
+      title: schema.tasks.title,
+      priority: schema.tasks.priority,
+      dueAt: schema.tasks.dueAt,
+      projectName: schema.projects.name,
+      projectSlug: schema.projects.slug,
+      statusKind: schema.taskStatuses.kind,
+    })
+    .from(schema.tasks)
+    .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
+    .leftJoin(schema.projects, eq(schema.projects.id, schema.tasks.projectId))
+    .where(and(
+      eq(schema.tasks.tenantId, tenantId),
+      eq(schema.tasks.workspaceId, workspace.id),
+      sql`${schema.taskStatuses.kind} is null or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')`,
+    ))
+    .orderBy(
+      asc(sql`case when ${schema.taskStatuses.kind} = 'blocked' then 0 else 1 end`),
+      asc(sql`case when ${schema.tasks.priority} = 'urgent' then 0 when ${schema.tasks.priority} = 'high' then 1 else 2 end`),
+      asc(sql`case when ${schema.tasks.dueAt} is null then 1 else 0 end`),
+      asc(schema.tasks.dueAt),
+      desc(schema.tasks.updatedAt),
+    )
+    .limit(3);
 
   const metrics = {
     activeProjects: activeProjectsCount?.value ?? 0,
     openTasks: taskMetrics?.openTasks ?? 0,
     overdueTasks: taskMetrics?.overdueTasks ?? 0,
     decisionsLogged: decisionMetrics?.value ?? 0,
+    blockedTasks: taskMetrics?.blockedTasks ?? 0,
+    urgentTasks: taskMetrics?.urgentTasks ?? 0,
+    dueSoonTasks: taskMetrics?.dueSoonTasks ?? 0,
+    unassignedTasks: taskMetrics?.unassignedTasks ?? 0,
   };
 
   const attentionItems: string[] = [];
@@ -205,6 +268,11 @@ export async function getWorkspaceHome(args: {
       meetingAt: meeting.meetingAt ? meeting.meetingAt.toISOString() : null,
     })),
     openTasks: openTasks.map((task) => ({
+      ...task,
+      dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+      statusKind: task.statusKind ?? null,
+    })),
+    focusTasks: focusTasks.map((task) => ({
       ...task,
       dueAt: task.dueAt ? task.dueAt.toISOString() : null,
       statusKind: task.statusKind ?? null,
