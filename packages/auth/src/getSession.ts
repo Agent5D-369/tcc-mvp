@@ -27,11 +27,9 @@ async function getDemoSession(): Promise<AppSession | null> {
 }
 
 export async function getSession(): Promise<AppSession | null> {
-  if (process.env.DEMO_MODE === "true") {
-    const demoSession = await getDemoSession();
-    if (demoSession) {
-      return demoSession;
-    }
+  const demoSession = await getDemoSession();
+  if (demoSession) {
+    return demoSession;
   }
 
   const session = await auth();

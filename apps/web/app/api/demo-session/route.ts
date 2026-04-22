@@ -11,10 +11,6 @@ const demoSessionSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  if (process.env.DEMO_MODE !== "true") {
-    return NextResponse.json({ error: "Demo mode is disabled" }, { status: 403 });
-  }
-
   try {
     console.log("[demo-session] request received");
     const body = demoSessionSchema.parse(await req.json());
