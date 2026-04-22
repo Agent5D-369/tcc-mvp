@@ -1,21 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
 import { db, schema } from "@workspace-kit/db";
 import { ensureUserWorkspaceMembership, resolveMembershipByEmail } from "./membership";
-
-function normalizeEnvValue(value: string | undefined) {
-  const trimmed = value?.trim() ?? "";
-
-  if (
-    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1).trim();
-  }
-
-  return trimmed;
-}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -28,30 +14,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.AUTH_GOOGLE_ID ?? "",
       clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
       allowDangerousEmailAccountLinking: true,
-    }),
-    Credentials({
-      name: "Demo Login",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        name: { label: "Name", type: "text" },
-      },
-      async authorize(credentials) {
-        const email = credentials?.email?.toString().trim().toLowerCase();
-        const name =
-          credentials?.name?.toString().trim() ||
-          normalizeEnvValue(process.env.AUTH_DEMO_NAME) ||
-          "QuickLaunch Demo User";
-
-        if (!email) {
-          return null;
-        }
-
-        return {
-          id: email,
-          email,
-          name,
-        };
-      },
     }),
   ],
   callbacks: {

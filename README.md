@@ -28,6 +28,7 @@ Copy `.env.example` to `.env` and set the values you need.
 DATABASE_URL=
 AUTH_SECRET=
 AUTH_TRUST_HOST=true
+NEXTAUTH_URL=http://localhost:3000
 AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
 AUTH_DEMO_EMAIL=demo@example.com
@@ -37,7 +38,6 @@ OPENROUTER_API_KEY=
 OPENROUTER_DEFAULT_MODEL=openai/gpt-4.1-mini
 OPENROUTER_HTTP_REFERER=http://localhost:3000
 OPENROUTER_X_TITLE=QuickLaunch Team Command Center
-NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 `OPENROUTER_*` is optional for Phase 1 unless you actively use the conversation endpoints.
@@ -63,6 +63,20 @@ Recommended Railway services for Phase 1:
 1. Web service from this repo
 2. PostgreSQL service
 
+Recommended Railway web variables:
+
+```bash
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+AUTH_SECRET=replace-with-a-long-random-string
+AUTH_TRUST_HOST=true
+NEXTAUTH_URL=https://your-service.up.railway.app
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+AUTH_DEMO_EMAIL=demo@example.com
+AUTH_DEMO_NAME=QuickLaunch Demo User
+DEMO_MODE=false
+```
+
 Optional later services:
 
 1. Redis
@@ -84,5 +98,6 @@ The seed script creates:
 ## Notes
 
 - The demo credentials flow is for controlled staging access. It is not a password system.
+- Railway deploys now run migrations only. Seed data should be run intentionally, not on every deploy.
 - Root routing redirects signed-in users to their active workspace when membership data is present.
 - If you want to connect a Git remote, initialize the repo here and add your remote at this directory level so the research markdown in the parent folder stays out of the app repository.

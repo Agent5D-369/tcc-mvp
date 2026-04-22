@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("demo@example.com");
@@ -50,13 +49,9 @@ export default function SignInPage() {
             workspace on local or staging environments.
           </p>
           <div className="hero-actions">
-            <button
-              className="button-primary"
-              onClick={() => signIn("google", { callbackUrl: "/" })}
-              type="button"
-            >
+            <a className="button-primary" href="/api/auth/signin/google?callbackUrl=/">
               Continue with Google
-            </button>
+            </a>
           </div>
         </div>
 

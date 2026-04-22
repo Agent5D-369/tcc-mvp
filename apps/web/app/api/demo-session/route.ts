@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
 import { ensureUserWorkspaceMembership, resolveMembershipByEmail } from "@workspace-kit/auth/membership";
 import { clearDemoSessionCookie, createDemoSessionToken, setDemoSessionCookie } from "@workspace-kit/auth/demoSession";
+import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 
 const demoSessionSchema = z.object({
   email: z.string().email(),
@@ -50,6 +51,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No workspace membership available" }, { status: 500 });
     }
 
+    const route = await getActiveWorkspaceRoute({
+      tenantId: membership.tenantId,
+      workspaceId: membership.workspaceId,
+    });
+
+    if (!route) {
+      console.error("[demo-session] active workspace route lookup failed", {
+        email,
+        tenantId: membership.tenantId,
+        workspaceId: membership.workspaceId,
+      });
+      return NextResponse.json({ error: "Workspace route could not be resolved" }, { status: 500 });
+    }
+
     const token = await createDemoSessionToken({
       userId: user.id,
       email: user.email,
@@ -61,7 +76,7 @@ export async function POST(req: NextRequest) {
     await setDemoSessionCookie(token);
     console.log("[demo-session] cookie written", { userId: user.id, workspaceId: membership.workspaceId });
 
-    return NextResponse.json({ ok: true, url: "/" });
+    return NextResponse.json({ ok: true, url: `/${route.tenantSlug}/${route.workspaceSlug}` });
   } catch (error) {
     console.error("[demo-session] failed", error);
     return NextResponse.json(
