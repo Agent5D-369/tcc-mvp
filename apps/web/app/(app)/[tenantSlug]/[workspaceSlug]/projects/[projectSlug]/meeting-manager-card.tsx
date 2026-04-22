@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
-import { MobileSheet } from "./mobile-sheet";
+import { MobileSheet } from "../../mobile-sheet";
+import { useWorkspaceFeedback } from "../../workspace-feedback";
 import { toDateTimeInputValue } from "./project-room-utils";
 
 type MeetingManagerCardProps = {
@@ -19,13 +20,12 @@ type MeetingManagerCardProps = {
 function MeetingEditor({
   meeting,
   onClose,
-  onSaved,
 }: {
   meeting: MeetingManagerCardProps["meetings"][number];
   onClose: () => void;
-  onSaved: (message: string) => void;
 }) {
   const router = useRouter();
+  const { pushToast } = useWorkspaceFeedback();
   const [title, setTitle] = useState(meeting.title);
   const [summary, setSummary] = useState(meeting.summary || "");
   const [notesMarkdown, setNotesMarkdown] = useState(meeting.notesMarkdown || "");
@@ -58,11 +58,13 @@ function MeetingEditor({
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Meeting update failed");
+        const message = result.error || "Meeting update failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
-      onSaved(`Saved meeting "${title.trim()}".`);
+      pushToast(`Saved meeting "${title.trim()}".`);
       onClose();
       router.refresh();
     });
@@ -83,11 +85,13 @@ function MeetingEditor({
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Meeting delete failed");
+        const message = result.error || "Meeting delete failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
-      onSaved(`Deleted meeting "${meeting.title}".`);
+      pushToast(`Deleted meeting "${meeting.title}".`);
       onClose();
       router.refresh();
     });
@@ -136,7 +140,6 @@ function MeetingEditor({
 
 export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
   const [activeMeeting, setActiveMeeting] = useState<MeetingManagerCardProps["meetings"][number] | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <section className="card">
@@ -144,7 +147,6 @@ export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
         <h2>Meetings</h2>
         <span className="muted">{meetings.length} tracked</span>
       </div>
-      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {meetings.length ? (
         <div className="stack compact-stack">
           {meetings.map((meeting) => (
@@ -157,14 +159,7 @@ export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
                     {meeting.meetingAt ? <span>{new Date(meeting.meetingAt).toLocaleString()}</span> : <span>No meeting time</span>}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  onClick={() => {
-                    setNotice(null);
-                    setActiveMeeting(meeting);
-                  }}
-                >
+                <button type="button" className="button-secondary" onClick={() => setActiveMeeting(meeting)}>
                   Edit
                 </button>
               </div>
@@ -181,12 +176,7 @@ export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
         onClose={() => setActiveMeeting(null)}
       >
         {activeMeeting ? (
-          <MeetingEditor
-            key={activeMeeting.id}
-            meeting={activeMeeting}
-            onClose={() => setActiveMeeting(null)}
-            onSaved={setNotice}
-          />
+          <MeetingEditor key={activeMeeting.id} meeting={activeMeeting} onClose={() => setActiveMeeting(null)} />
         ) : null}
       </MobileSheet>
     </section>

@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
-import { getBadgeClass } from "../projects/[projectSlug]/project-room-utils";
-import { getWorkspaceTasksIndex } from "../workspace-screen-data";
+import { TasksReviewList } from "./tasks-review-list";
+import { getWorkspaceTaskStatuses, getWorkspaceTasksIndex } from "../workspace-screen-data";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string }>;
@@ -34,6 +33,10 @@ export default async function TasksPage({ params }: PageProps) {
     tenantId: session.activeTenantId,
     workspaceId: session.activeWorkspaceId,
   });
+  const statuses = await getWorkspaceTaskStatuses({
+    tenantId: session.activeTenantId,
+    workspaceId: session.activeWorkspaceId,
+  });
 
   return (
     <main className="page-shell app-page-shell">
@@ -47,39 +50,12 @@ export default async function TasksPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="record-list">
-        {tasks.length ? (
-          tasks.map((task) => (
-            <article key={task.id} className="record-card">
-              <div className="record-card-copy">
-                <div className="meta-row">
-                  <strong>{task.title}</strong>
-                  <span className={getBadgeClass(task.priority)}>{task.priority}</span>
-                  <span className={getBadgeClass(task.statusKind || "neutral")}>{task.statusName}</span>
-                </div>
-                <p className="entity-preview">{task.description || "No task detail yet."}</p>
-                <div className="entity-summary-meta">
-                  <span>{task.dueAt ? `Due ${new Date(task.dueAt).toLocaleDateString()}` : "No due date"}</span>
-                  <span>{task.projectName || "No project"}</span>
-                </div>
-              </div>
-              {task.projectSlug ? (
-                <Link
-                  className="button-secondary"
-                  href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${task.projectSlug}`}
-                >
-                  View project
-                </Link>
-              ) : null}
-            </article>
-          ))
-        ) : (
-          <section className="card">
-            <h2>No open tasks</h2>
-            <p className="empty-note">Capture the next action from a project room when new work appears.</p>
-          </section>
-        )}
-      </section>
+      <TasksReviewList
+        tenantSlug={route.tenantSlug}
+        workspaceSlug={route.workspaceSlug}
+        tasks={tasks}
+        statuses={statuses}
+      />
     </main>
   );
 }

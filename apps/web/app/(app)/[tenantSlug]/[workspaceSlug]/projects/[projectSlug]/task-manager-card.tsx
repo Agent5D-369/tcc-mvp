@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { readApiResult } from "../../../../../lib/read-api-result";
-import { MobileSheet } from "./mobile-sheet";
-import { getBadgeClass, toDateInputValue } from "./project-room-utils";
+import { useState } from "react";
+import { MobileSheet } from "../../mobile-sheet";
+import { TaskEditorForm, type EditableTaskRecord } from "../../task-editor-form";
+import { getBadgeClass } from "./project-room-utils";
 
 type TaskManagerCardProps = {
   tasks: Array<{
@@ -24,146 +23,8 @@ type TaskManagerCardProps = {
   }>;
 };
 
-type EditableTask = TaskManagerCardProps["tasks"][number];
-
-function TaskEditor({
-  task,
-  statuses,
-  onClose,
-  onSaved,
-}: {
-  task: EditableTask;
-  statuses: TaskManagerCardProps["statuses"];
-  onClose: () => void;
-  onSaved: (message: string) => void;
-}) {
-  const router = useRouter();
-  const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description || "");
-  const [priority, setPriority] = useState(task.priority);
-  const [dueAt, setDueAt] = useState(toDateInputValue(task.dueAt));
-  const [statusId, setStatusId] = useState(task.statusId || "");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function onSave() {
-    setError(null);
-
-    if (!title.trim()) {
-      setError("Enter a task title.");
-      return;
-    }
-
-    startTransition(async () => {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || null,
-          priority,
-          dueAt: dueAt || null,
-          statusId: statusId || null,
-        }),
-      });
-
-      const result = await readApiResult(response);
-
-      if (!response.ok) {
-        setError(result.error || "Task update failed");
-        return;
-      }
-
-      onSaved(`Saved task "${title.trim()}".`);
-      onClose();
-      router.refresh();
-    });
-  }
-
-  function onDelete() {
-    if (!window.confirm(`Delete task "${task.title}"?`)) {
-      return;
-    }
-
-    setError(null);
-
-    startTransition(async () => {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "DELETE",
-      });
-
-      const result = await readApiResult(response);
-
-      if (!response.ok) {
-        setError(result.error || "Task delete failed");
-        return;
-      }
-
-      onSaved(`Deleted task "${task.title}".`);
-      onClose();
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="form-grid">
-      <label className="field">
-        <span className="field-label">Task title</span>
-        <input value={title} onChange={(event) => setTitle(event.target.value)} />
-      </label>
-      <label className="field">
-        <span className="field-label">Description</span>
-        <textarea
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          rows={3}
-          placeholder="State the concrete action and expected outcome."
-        />
-      </label>
-      <div className="form-split">
-        <label className="field">
-          <span className="field-label">Priority</span>
-          <select value={priority} onChange={(event) => setPriority(event.target.value)}>
-            <option value="low">low</option>
-            <option value="medium">medium</option>
-            <option value="high">high</option>
-            <option value="urgent">urgent</option>
-          </select>
-        </label>
-        <label className="field">
-          <span className="field-label">Due date</span>
-          <input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
-        </label>
-      </div>
-      <label className="field">
-        <span className="field-label">Status</span>
-        <select value={statusId} onChange={(event) => setStatusId(event.target.value)}>
-          <option value="">No status</option>
-          {statuses.map((status) => (
-            <option key={status.id} value={status.id}>
-              {status.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
-      <div className="entity-actions">
-        <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
-          {isPending ? "Saving..." : "Save task"}
-        </button>
-        <button className="button-secondary button-danger" type="button" onClick={onDelete} disabled={isPending}>
-          Delete
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
-  const [activeTask, setActiveTask] = useState<EditableTask | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [activeTask, setActiveTask] = useState<EditableTaskRecord | null>(null);
 
   return (
     <section className="card">
@@ -171,7 +32,6 @@ export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
         <h2>Task management</h2>
         <span className="muted">{tasks.length} tracked</span>
       </div>
-      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {tasks.length ? (
         <div className="stack compact-stack">
           {tasks.map((task) => (
@@ -188,14 +48,7 @@ export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
                     {task.dueAt ? <span>Due {new Date(task.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  onClick={() => {
-                    setNotice(null);
-                    setActiveTask(task);
-                  }}
-                >
+                <button type="button" className="button-secondary" onClick={() => setActiveTask(task)}>
                   Edit
                 </button>
               </div>
@@ -207,17 +60,16 @@ export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
       )}
       <MobileSheet
         open={Boolean(activeTask)}
-        title={activeTask ? `Edit ${activeTask.title}` : "Edit task"}
+        title={activeTask ? activeTask.title : "Edit task"}
         description="Adjust the task only when something changed. Review mode stays compact until you need it."
         onClose={() => setActiveTask(null)}
       >
         {activeTask ? (
-          <TaskEditor
+          <TaskEditorForm
             key={activeTask.id}
             task={activeTask}
             statuses={statuses}
             onClose={() => setActiveTask(null)}
-            onSaved={setNotice}
           />
         ) : null}
       </MobileSheet>

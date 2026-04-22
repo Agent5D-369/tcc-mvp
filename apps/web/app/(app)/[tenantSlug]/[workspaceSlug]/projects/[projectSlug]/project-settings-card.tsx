@@ -3,7 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
-import { MobileSheet } from "./mobile-sheet";
+import { MobileSheet } from "../../mobile-sheet";
+import { useWorkspaceFeedback } from "../../workspace-feedback";
 import { toDateInputValue } from "./project-room-utils";
 
 type ProjectSettingsCardProps = {
@@ -21,6 +22,7 @@ type ProjectSettingsCardProps = {
 
 export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsCardProps) {
   const router = useRouter();
+  const { pushToast } = useWorkspaceFeedback();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(project.name);
   const [summary, setSummary] = useState(project.summary || "");
@@ -29,7 +31,6 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
   const [startDate, setStartDate] = useState(toDateInputValue(project.startDate));
   const [targetDate, setTargetDate] = useState(toDateInputValue(project.targetDate));
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -75,11 +76,13 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Project update failed");
+        const message = result.error || "Project update failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
-      setNotice(`Saved project "${nextName.trim()}".`);
+      pushToast(`Saved project "${nextName.trim()}".`);
       setIsEditing(false);
       router.refresh();
     });
@@ -100,10 +103,13 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Project archive failed");
+        const message = result.error || "Project archive failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
+      pushToast(`Archived project "${project.name}".`);
       router.push(workspaceHref);
       router.refresh();
     });
@@ -118,14 +124,12 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
           className="button-secondary"
           onClick={() => {
             setError(null);
-            setNotice(null);
             setIsEditing((value) => !value);
           }}
         >
           Edit
         </button>
       </div>
-      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
 
       <div className="stack compact-stack">
         <div className="record-summary-grid">

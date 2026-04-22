@@ -102,6 +102,7 @@ export async function getWorkspaceTasksIndex(args: {
       description: schema.tasks.description,
       dueAt: schema.tasks.dueAt,
       priority: schema.tasks.priority,
+      statusId: schema.taskStatuses.id,
       projectName: schema.projects.name,
       projectSlug: schema.projects.slug,
       statusName: schema.taskStatuses.name,
@@ -127,6 +128,24 @@ export async function getWorkspaceTasksIndex(args: {
     statusName: task.statusName ?? "Unassigned",
     statusKind: task.statusKind ?? null,
   }));
+}
+
+export async function getWorkspaceTaskStatuses(args: {
+  tenantId: string;
+  workspaceId: string;
+}) {
+  return db
+    .select({
+      id: schema.taskStatuses.id,
+      name: schema.taskStatuses.name,
+      kind: schema.taskStatuses.kind,
+    })
+    .from(schema.taskStatuses)
+    .where(and(
+      eq(schema.taskStatuses.tenantId, args.tenantId),
+      eq(schema.taskStatuses.workspaceId, args.workspaceId),
+    ))
+    .orderBy(asc(schema.taskStatuses.sortOrder), asc(schema.taskStatuses.name));
 }
 
 export async function getWorkspaceMeetingsIndex(args: {

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { getSession } from "@workspace-kit/auth";
 import { getWorkspaceShellData } from "./workspace-screen-data";
 import { MobileBottomNav } from "./mobile-bottom-nav";
+import { WorkspaceFeedbackProvider } from "./workspace-feedback";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
 type LayoutProps = {
@@ -24,26 +25,28 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
   });
 
   return (
-    <div className="workspace-shell">
-      <header className="workspace-header">
-        <div className="workspace-header-copy">
-          <span className="eyebrow">QuickLaunch Team Command Center</span>
-          <h1>{shell.currentWorkspace.workspaceName}</h1>
-          <p>{shell.currentWorkspace.workspaceDescription || "Run projects, tasks, meetings, and decisions from one command surface."}</p>
-        </div>
-        <WorkspaceSwitcher
-          value={`/${route.tenantSlug}/${route.workspaceSlug}`}
-          options={shell.contexts.map((context) => ({
-            tenantSlug: context.tenantSlug,
-            tenantName: context.tenantName,
-            workspaceSlug: context.workspaceSlug,
-            workspaceName: context.workspaceName,
-            role: context.role,
-          }))}
-        />
-      </header>
-      <div className="workspace-content">{children}</div>
-      <MobileBottomNav tenantSlug={route.tenantSlug} workspaceSlug={route.workspaceSlug} />
-    </div>
+    <WorkspaceFeedbackProvider>
+      <div className="workspace-shell">
+        <header className="workspace-header">
+          <div className="workspace-header-copy">
+            <span className="eyebrow">QuickLaunch Team Command Center</span>
+            <h1>{shell.currentWorkspace.workspaceName}</h1>
+            <p>{shell.currentWorkspace.workspaceDescription || "Run projects, tasks, meetings, and decisions from one command surface."}</p>
+          </div>
+          <WorkspaceSwitcher
+            value={`/${route.tenantSlug}/${route.workspaceSlug}`}
+            options={shell.contexts.map((context) => ({
+              tenantSlug: context.tenantSlug,
+              tenantName: context.tenantName,
+              workspaceSlug: context.workspaceSlug,
+              workspaceName: context.workspaceName,
+              role: context.role,
+            }))}
+          />
+        </header>
+        <div className="workspace-content">{children}</div>
+        <MobileBottomNav tenantSlug={route.tenantSlug} workspaceSlug={route.workspaceSlug} />
+      </div>
+    </WorkspaceFeedbackProvider>
   );
 }

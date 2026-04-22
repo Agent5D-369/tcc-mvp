@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
-import { MobileSheet } from "./mobile-sheet";
+import { MobileSheet } from "../../mobile-sheet";
+import { useWorkspaceFeedback } from "../../workspace-feedback";
 import { toDateInputValue } from "./project-room-utils";
 
 type MilestoneManagerCardProps = {
@@ -18,13 +19,12 @@ type MilestoneManagerCardProps = {
 function MilestoneEditor({
   milestone,
   onClose,
-  onSaved,
 }: {
   milestone: MilestoneManagerCardProps["milestones"][number];
   onClose: () => void;
-  onSaved: (message: string) => void;
 }) {
   const router = useRouter();
+  const { pushToast } = useWorkspaceFeedback();
   const [name, setName] = useState(milestone.name);
   const [description, setDescription] = useState(milestone.description || "");
   const [dueAt, setDueAt] = useState(toDateInputValue(milestone.dueAt));
@@ -55,11 +55,13 @@ function MilestoneEditor({
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Milestone update failed");
+        const message = result.error || "Milestone update failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
-      onSaved(`Saved milestone "${name.trim()}".`);
+      pushToast(`Saved milestone "${name.trim()}".`);
       onClose();
       router.refresh();
     });
@@ -80,11 +82,13 @@ function MilestoneEditor({
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Milestone delete failed");
+        const message = result.error || "Milestone delete failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
-      onSaved(`Deleted milestone "${milestone.name}".`);
+      pushToast(`Deleted milestone "${milestone.name}".`);
       onClose();
       router.refresh();
     });
@@ -124,7 +128,6 @@ function MilestoneEditor({
 
 export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) {
   const [activeMilestone, setActiveMilestone] = useState<MilestoneManagerCardProps["milestones"][number] | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <section className="card">
@@ -132,7 +135,6 @@ export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) 
         <h2>Milestones</h2>
         <span className="muted">{milestones.length} tracked</span>
       </div>
-      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {milestones.length ? (
         <div className="stack compact-stack">
           {milestones.map((milestone) => (
@@ -145,14 +147,7 @@ export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) 
                     {milestone.dueAt ? <span>Due {new Date(milestone.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  onClick={() => {
-                    setNotice(null);
-                    setActiveMilestone(milestone);
-                  }}
-                >
+                <button type="button" className="button-secondary" onClick={() => setActiveMilestone(milestone)}>
                   Edit
                 </button>
               </div>
@@ -169,12 +164,7 @@ export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) 
         onClose={() => setActiveMilestone(null)}
       >
         {activeMilestone ? (
-          <MilestoneEditor
-            key={activeMilestone.id}
-            milestone={activeMilestone}
-            onClose={() => setActiveMilestone(null)}
-            onSaved={setNotice}
-          />
+          <MilestoneEditor key={activeMilestone.id} milestone={activeMilestone} onClose={() => setActiveMilestone(null)} />
         ) : null}
       </MobileSheet>
     </section>

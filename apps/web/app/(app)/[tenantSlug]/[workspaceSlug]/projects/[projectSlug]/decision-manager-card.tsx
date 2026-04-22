@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
-import { MobileSheet } from "./mobile-sheet";
+import { MobileSheet } from "../../mobile-sheet";
+import { useWorkspaceFeedback } from "../../workspace-feedback";
 import { getBadgeClass } from "./project-room-utils";
 
 type DecisionManagerCardProps = {
@@ -20,13 +21,12 @@ type DecisionManagerCardProps = {
 function DecisionEditor({
   decision,
   onClose,
-  onSaved,
 }: {
   decision: DecisionManagerCardProps["decisions"][number];
   onClose: () => void;
-  onSaved: (message: string) => void;
 }) {
   const router = useRouter();
+  const { pushToast } = useWorkspaceFeedback();
   const [title, setTitle] = useState(decision.title);
   const [context, setContext] = useState(decision.context || "");
   const [decisionText, setDecisionText] = useState(decision.decisionText);
@@ -59,11 +59,13 @@ function DecisionEditor({
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Decision update failed");
+        const message = result.error || "Decision update failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
-      onSaved(`Saved decision "${title.trim()}".`);
+      pushToast(`Saved decision "${title.trim()}".`);
       onClose();
       router.refresh();
     });
@@ -84,11 +86,13 @@ function DecisionEditor({
       const result = await readApiResult(response);
 
       if (!response.ok) {
-        setError(result.error || "Decision delete failed");
+        const message = result.error || "Decision delete failed";
+        setError(message);
+        pushToast(message, "error");
         return;
       }
 
-      onSaved(`Deleted decision "${decision.title}".`);
+      pushToast(`Deleted decision "${decision.title}".`);
       onClose();
       router.refresh();
     });
@@ -142,7 +146,6 @@ function DecisionEditor({
 
 export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
   const [activeDecision, setActiveDecision] = useState<DecisionManagerCardProps["decisions"][number] | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <section className="card">
@@ -150,7 +153,6 @@ export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
         <h2>Decisions</h2>
         <span className="muted">{decisions.length} tracked</span>
       </div>
-      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {decisions.length ? (
         <div className="stack compact-stack">
           {decisions.map((decision) => (
@@ -169,14 +171,7 @@ export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
                     <span>{decision.context || "No decision context yet."}</span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="button-secondary"
-                  onClick={() => {
-                    setNotice(null);
-                    setActiveDecision(decision);
-                  }}
-                >
+                <button type="button" className="button-secondary" onClick={() => setActiveDecision(decision)}>
                   Edit
                 </button>
               </div>
@@ -193,12 +188,7 @@ export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
         onClose={() => setActiveDecision(null)}
       >
         {activeDecision ? (
-          <DecisionEditor
-            key={activeDecision.id}
-            decision={activeDecision}
-            onClose={() => setActiveDecision(null)}
-            onSaved={setNotice}
-          />
+          <DecisionEditor key={activeDecision.id} decision={activeDecision} onClose={() => setActiveDecision(null)} />
         ) : null}
       </MobileSheet>
     </section>
