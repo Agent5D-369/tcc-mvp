@@ -98,6 +98,9 @@ export async function getProjectOverview(args: {
       title: schema.tasks.title,
       dueAt: schema.tasks.dueAt,
       priority: schema.tasks.priority,
+      statusId: schema.taskStatuses.id,
+      statusName: schema.taskStatuses.name,
+      statusKind: schema.taskStatuses.kind,
     })
     .from(schema.tasks)
     .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
@@ -107,6 +110,20 @@ export async function getProjectOverview(args: {
     ))
     .orderBy(asc(schema.tasks.dueAt), desc(schema.tasks.updatedAt))
     .limit(5);
+
+  const availableStatuses = await db
+    .select({
+      id: schema.taskStatuses.id,
+      name: schema.taskStatuses.name,
+      kind: schema.taskStatuses.kind,
+      sortOrder: schema.taskStatuses.sortOrder,
+    })
+    .from(schema.taskStatuses)
+    .where(and(
+      eq(schema.taskStatuses.tenantId, tenantId),
+      eq(schema.taskStatuses.workspaceId, project.workspaceId),
+    ))
+    .orderBy(asc(schema.taskStatuses.sortOrder), asc(schema.taskStatuses.name));
 
   const summary = taskSummary[0] ?? { total: 0, done: 0, blocked: 0 };
 
@@ -140,5 +157,6 @@ export async function getProjectOverview(args: {
       ...t,
       dueAt: t.dueAt ? t.dueAt.toISOString() : null,
     })),
+    availableStatuses: availableStatuses.map(({ sortOrder: _sortOrder, ...status }) => status),
   };
 }

@@ -343,6 +343,23 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.task-row-copy {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.task-status-field {
+  min-width: 180px;
+}
+
 @media (max-width: 980px) {
   .hero,
   .dashboard-grid,
@@ -370,6 +387,15 @@ textarea {
   .metric-grid,
   .stat-strip {
     grid-template-columns: 1fr;
+  }
+
+  .task-row {
+    flex-direction: column;
+  }
+
+  .task-status-field {
+    min-width: 0;
+    width: 100%;
   }
 
   .form-split {

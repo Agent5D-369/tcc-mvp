@@ -4,6 +4,7 @@ import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { CreateTaskCard } from "./create-task-card";
+import { TaskStatusList } from "./task-status-list";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string; projectSlug: string }>;
@@ -103,17 +104,7 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         <section className="card">
           <h2>Next actions</h2>
           {data.nextActions.length ? (
-            <ul className="list">
-              {data.nextActions.map((task) => (
-                <li key={task.id}>
-                  <strong>{task.title}</strong>
-                  <div className="meta-row">
-                    <span className={getBadgeClass(task.priority)}>{task.priority}</span>
-                    {task.dueAt ? <span className="badge badge-neutral">Due {new Date(task.dueAt).toLocaleDateString()}</span> : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <TaskStatusList tasks={data.nextActions} statuses={data.availableStatuses} />
           ) : (
             <p className="empty-note">No open next actions found.</p>
           )}
