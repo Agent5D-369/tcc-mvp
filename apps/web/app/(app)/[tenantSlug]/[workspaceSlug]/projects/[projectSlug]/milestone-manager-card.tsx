@@ -82,12 +82,17 @@ function MilestoneEditor({
   }
 
   return (
-    <div className="entity-row">
-      <div className="entity-copy">
-        <strong>{milestone.name}</strong>
-        {milestone.description ? <p className="muted">{milestone.description}</p> : null}
-        {milestone.dueAt ? <div className="muted">Due {new Date(milestone.dueAt).toLocaleDateString()}</div> : null}
-      </div>
+    <details className="entity-shell">
+      <summary className="entity-summary">
+        <div className="entity-summary-main">
+          <strong>{milestone.name}</strong>
+          <p className="entity-preview">{milestone.description || "No milestone detail yet."}</p>
+          <div className="entity-summary-meta">
+            {milestone.dueAt ? <span>Due {new Date(milestone.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
+          </div>
+        </div>
+        <span className="entity-edit-hint">Edit</span>
+      </summary>
       <div className="entity-editor">
         <label className="field">
           <span className="field-label">Milestone name</span>
@@ -116,7 +121,7 @@ function MilestoneEditor({
           </button>
         </div>
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -125,6 +130,7 @@ export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) 
     <section className="card">
       <div className="card-header-row">
         <h2>Milestone management</h2>
+        <span className="muted">{milestones.length} tracked</span>
       </div>
       {milestones.length ? (
         <div className="stack">

@@ -86,18 +86,23 @@ function DecisionEditor({
   }
 
   return (
-    <div className="entity-row">
-      <div className="entity-copy">
-        <div className="meta-row">
-          <strong>{decision.title}</strong>
-          <span className={getBadgeClass(decision.status)}>{decision.status}</span>
-          {decision.decidedAt ? (
-            <span className="badge badge-neutral">{new Date(decision.decidedAt).toLocaleDateString()}</span>
-          ) : null}
+    <details className="entity-shell">
+      <summary className="entity-summary">
+        <div className="entity-summary-main">
+          <div className="meta-row">
+            <strong>{decision.title}</strong>
+            <span className={getBadgeClass(decision.status)}>{decision.status}</span>
+            {decision.decidedAt ? (
+              <span className="badge badge-neutral">{new Date(decision.decidedAt).toLocaleDateString()}</span>
+            ) : null}
+          </div>
+          <p className="entity-preview">{decision.decisionText}</p>
+          <div className="entity-summary-meta">
+            <span>{decision.context || "No decision context yet."}</span>
+          </div>
         </div>
-        <p className="muted">{decision.decisionText}</p>
-        {decision.context ? <div className="muted">{decision.context}</div> : null}
-      </div>
+        <span className="entity-edit-hint">Edit</span>
+      </summary>
       <div className="entity-editor">
         <label className="field">
           <span className="field-label">Decision title</span>
@@ -140,7 +145,7 @@ function DecisionEditor({
           </button>
         </div>
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -149,6 +154,7 @@ export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
     <section className="card">
       <div className="card-header-row">
         <h2>Decision management</h2>
+        <span className="muted">{decisions.length} tracked</span>
       </div>
       {decisions.length ? (
         <div className="stack">

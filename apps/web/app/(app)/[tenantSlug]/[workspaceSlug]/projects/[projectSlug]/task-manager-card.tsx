@@ -99,16 +99,23 @@ function TaskEditor({
   }
 
   return (
-    <div className="entity-row">
-      <div className="entity-copy">
-        <div className="meta-row">
-          <strong>{task.title}</strong>
-          <span className={getBadgeClass(task.priority)}>{task.priority}</span>
-          <span className={getBadgeClass(task.statusKind || "neutral")}>{task.statusName || "Unassigned"}</span>
+    <details className="entity-shell">
+      <summary className="entity-summary">
+        <div className="entity-summary-main">
+          <div className="meta-row">
+            <strong>{task.title}</strong>
+            <span className={getBadgeClass(task.priority)}>{task.priority}</span>
+            <span className={getBadgeClass(task.statusKind || "neutral")}>{task.statusName || "Unassigned"}</span>
+          </div>
+          <p className="entity-preview">
+            {task.description || "No task detail yet."}
+          </p>
+          <div className="entity-summary-meta">
+            {task.dueAt ? <span>Due {new Date(task.dueAt).toLocaleDateString()}</span> : <span>No due date</span>}
+          </div>
         </div>
-        {task.description ? <p className="muted">{task.description}</p> : null}
-        {task.dueAt ? <div className="muted">Due {new Date(task.dueAt).toLocaleDateString()}</div> : null}
-      </div>
+        <span className="entity-edit-hint">Edit</span>
+      </summary>
 
       <div className="entity-editor">
         <label className="field">
@@ -160,15 +167,16 @@ function TaskEditor({
           </button>
         </div>
       </div>
-    </div>
+    </details>
   );
 }
 
 export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
   return (
-    <section className="card grid-span-2">
+    <section className="card">
       <div className="card-header-row">
         <h2>Task management</h2>
+        <span className="muted">{tasks.length} tracked</span>
       </div>
       {tasks.length ? (
         <div className="stack">

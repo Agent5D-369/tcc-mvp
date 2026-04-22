@@ -185,7 +185,7 @@ textarea {
 
 .management-grid {
   display: grid;
-  grid-template-columns: 1fr 1.8fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
 }
 
@@ -195,7 +195,7 @@ textarea {
 }
 
 .project-grid {
-  grid-template-columns: 1.2fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -290,6 +290,21 @@ textarea {
   margin-bottom: 12px;
 }
 
+.section-block {
+  margin-bottom: 14px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.section-heading p {
+  max-width: 48ch;
+}
+
 .badge-success {
   background: rgba(15, 118, 110, 0.12);
   color: var(--accent-strong);
@@ -355,10 +370,6 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.grid-span-2 {
-  grid-column: span 1;
-}
-
 .card-header-row {
   display: flex;
   justify-content: space-between;
@@ -367,28 +378,76 @@ textarea {
   margin-bottom: 12px;
 }
 
-.entity-row {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 18px;
-  padding-top: 16px;
+.entity-shell {
   border-top: 1px solid rgba(24, 35, 45, 0.08);
 }
 
-.entity-row:first-child {
-  padding-top: 0;
+.entity-shell:first-child {
   border-top: 0;
 }
 
-.entity-copy,
-.entity-editor,
-.entity-actions {
-  display: grid;
+.entity-shell > summary {
+  list-style: none;
 }
 
-.entity-copy,
-.entity-editor {
+.entity-shell > summary::-webkit-details-marker {
+  display: none;
+}
+
+.entity-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  cursor: pointer;
+  padding: 14px 0;
+}
+
+.entity-summary-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.entity-preview {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.entity-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.entity-edit-hint {
+  flex-shrink: 0;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-top: 6px;
+}
+
+.entity-editor {
+  display: grid;
+  gap: 12px;
+  padding: 0 0 18px;
+}
+
+.entity-shell[open] .entity-summary {
+  padding-bottom: 18px;
+  border-top: 0;
+  border-bottom: 1px solid rgba(24, 35, 45, 0.08);
+}
+
+.entity-actions {
+  display: grid;
 }
 
 .entity-actions {
@@ -453,7 +512,7 @@ textarea {
     flex-direction: column;
   }
 
-  .entity-row,
+  .section-heading,
   .entity-actions {
     grid-template-columns: 1fr;
   }

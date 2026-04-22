@@ -89,6 +89,15 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         </div>
       </section>
 
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <div className="kicker">Capture</div>
+            <h2 className="section-title">Add new operating records</h2>
+          </div>
+          <p className="empty-note">Capture the next action, milestone, decision, or meeting without leaving the room.</p>
+        </div>
+      </section>
       <section className="action-grid" style={{ marginBottom: 20 }}>
         <CreateTaskCard projectId={data.project.id} />
         <CreateMilestoneCard projectId={data.project.id} />
@@ -96,6 +105,15 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         <CreateMeetingCard projectId={data.project.id} />
       </section>
 
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <div className="kicker">Operate</div>
+            <h2 className="section-title">Run the project</h2>
+          </div>
+          <p className="empty-note">Project controls and task operations stay visible. Historical records open only when you need them.</p>
+        </div>
+      </section>
       <section className="management-grid" style={{ marginBottom: 20 }}>
         <ProjectSettingsCard
           project={data.project}
@@ -104,6 +122,15 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         <TaskManagerCard tasks={data.allTasks} statuses={data.availableStatuses} />
       </section>
 
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <div className="kicker">Records</div>
+            <h2 className="section-title">Review and update project history</h2>
+          </div>
+          <p className="empty-note">Use the drawers below to edit milestones, decisions, and meetings one record at a time.</p>
+        </div>
+      </section>
       <section className="project-grid" style={{ marginBottom: 20 }}>
         <MilestoneManagerCard milestones={data.milestones} />
         <DecisionManagerCard decisions={data.decisions} />

@@ -85,12 +85,17 @@ function MeetingEditor({
   }
 
   return (
-    <div className="entity-row">
-      <div className="entity-copy">
-        <strong>{meeting.title}</strong>
-        {meeting.summary ? <p className="muted">{meeting.summary}</p> : null}
-        {meeting.meetingAt ? <div className="muted">{new Date(meeting.meetingAt).toLocaleString()}</div> : null}
-      </div>
+    <details className="entity-shell">
+      <summary className="entity-summary">
+        <div className="entity-summary-main">
+          <strong>{meeting.title}</strong>
+          <p className="entity-preview">{meeting.summary || "No meeting summary yet."}</p>
+          <div className="entity-summary-meta">
+            {meeting.meetingAt ? <span>{new Date(meeting.meetingAt).toLocaleString()}</span> : <span>No meeting time</span>}
+          </div>
+        </div>
+        <span className="entity-edit-hint">Edit</span>
+      </summary>
       <div className="entity-editor">
         <label className="field">
           <span className="field-label">Meeting title</span>
@@ -128,7 +133,7 @@ function MeetingEditor({
           </button>
         </div>
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -137,6 +142,7 @@ export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
     <section className="card">
       <div className="card-header-row">
         <h2>Meeting management</h2>
+        <span className="muted">{meetings.length} tracked</span>
       </div>
       {meetings.length ? (
         <div className="stack">
