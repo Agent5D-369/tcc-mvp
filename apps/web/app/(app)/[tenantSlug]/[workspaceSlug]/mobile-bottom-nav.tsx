@@ -16,6 +16,7 @@ export function MobileBottomNav({ tenantSlug, workspaceSlug }: MobileBottomNavPr
     { href: `${baseHref}/projects`, label: "Projects", match: `${baseHref}/projects` },
     { href: `${baseHref}/tasks`, label: "Tasks", match: `${baseHref}/tasks` },
     { href: `${baseHref}/meetings`, label: "Meetings", match: `${baseHref}/meetings` },
+    { href: `${baseHref}/settings`, label: "Settings", match: `${baseHref}/settings` },
   ];
 
   return (

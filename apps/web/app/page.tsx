@@ -17,6 +17,10 @@ export default async function RootPage() {
     }
   }
 
+  if (session?.user?.id) {
+    redirect("/onboarding");
+  }
+
   return (
     <main className="marketing-shell">
       <div className="topbar">
@@ -25,7 +29,7 @@ export default async function RootPage() {
           <strong>Phase 1 execution workspace</strong>
         </div>
         <Link className="button-secondary" href="/signin">
-          {session ? "Complete workspace access" : "Sign in"}
+          {session ? "Continue setup" : "Sign in"}
         </Link>
       </div>
 
@@ -91,4 +95,3 @@ export default async function RootPage() {
     </main>
   );
 }
-

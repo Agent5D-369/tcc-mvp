@@ -54,18 +54,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       let membership = await resolveMembershipByUserId(upserted.id);
       if (!membership) {
-        if (!shouldAutoProvisionMemberships()) {
-          return false;
+        if (shouldAutoProvisionMemberships()) {
+          await ensureUserWorkspaceMembership({
+            userId: upserted.id,
+          });
+          membership = await resolveMembershipByUserId(upserted.id);
         }
-
-        await ensureUserWorkspaceMembership({
-          userId: upserted.id,
-        });
-        membership = await resolveMembershipByUserId(upserted.id);
-      }
-
-      if (!membership?.workspaceId) {
-        return false;
       }
 
       return true;

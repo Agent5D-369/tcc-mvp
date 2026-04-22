@@ -8,6 +8,8 @@ export async function getWorkspaceShellData(args: {
 }) {
   const [currentWorkspace] = await db
     .select({
+      membershipId: schema.memberships.id,
+      role: schema.memberships.role,
       tenantId: schema.tenants.id,
       tenantName: schema.tenants.name,
       tenantSlug: schema.tenants.slug,
@@ -16,9 +18,11 @@ export async function getWorkspaceShellData(args: {
       workspaceSlug: schema.workspaces.slug,
       workspaceDescription: schema.workspaces.description,
     })
-    .from(schema.workspaces)
+    .from(schema.memberships)
+    .innerJoin(schema.workspaces, eq(schema.workspaces.id, schema.memberships.workspaceId))
     .innerJoin(schema.tenants, eq(schema.tenants.id, schema.workspaces.tenantId))
     .where(and(
+      eq(schema.memberships.userId, args.userId),
       eq(schema.tenants.slug, args.tenantSlug),
       eq(schema.workspaces.slug, args.workspaceSlug),
     ))
@@ -48,6 +52,29 @@ export async function getWorkspaceShellData(args: {
     currentWorkspace,
     contexts,
   };
+}
+
+export async function getTenantWorkspaceIndex(args: {
+  tenantId: string;
+}) {
+  const workspaces = await db
+    .select({
+      id: schema.workspaces.id,
+      name: schema.workspaces.name,
+      slug: schema.workspaces.slug,
+      description: schema.workspaces.description,
+      visibility: schema.workspaces.visibility,
+      memberCount: sql<number>`count(distinct ${schema.memberships.userId})`.mapWith(Number),
+      projectCount: sql<number>`count(distinct ${schema.projects.id})`.mapWith(Number),
+    })
+    .from(schema.workspaces)
+    .leftJoin(schema.memberships, eq(schema.memberships.workspaceId, schema.workspaces.id))
+    .leftJoin(schema.projects, eq(schema.projects.workspaceId, schema.workspaces.id))
+    .where(eq(schema.workspaces.tenantId, args.tenantId))
+    .groupBy(schema.workspaces.id)
+    .orderBy(asc(schema.workspaces.name));
+
+  return workspaces;
 }
 
 export async function getWorkspaceProjectsIndex(args: {

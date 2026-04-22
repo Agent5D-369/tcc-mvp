@@ -1,7 +1,8 @@
 import { auth } from "./auth";
 import type { AppSession } from "./types";
 import { readDemoSessionToken } from "./demoSession";
-import { resolveMembershipByEmail } from "./membership";
+import { readActiveWorkspacePreference } from "./activeWorkspace";
+import { listUserMemberships, resolveMembershipByEmail } from "./membership";
 
 async function getDemoSession(): Promise<AppSession | null> {
   const demoSession = await readDemoSessionToken();
@@ -28,23 +29,47 @@ async function getDemoSession(): Promise<AppSession | null> {
 
 export async function getSession(): Promise<AppSession | null> {
   const demoSession = await getDemoSession();
-  if (demoSession) {
-    return demoSession;
-  }
+  const baseSession = demoSession ?? await (async () => {
+    const session = await auth();
+    if (!session?.user?.id || !session.user.email) {
+      return null;
+    }
 
-  const session = await auth();
-  if (!session?.user?.id || !session.user.email) {
+    return {
+      user: {
+        id: session.user.id,
+        email: session.user.email,
+        fullName: session.user.name ?? null,
+        image: session.user.image ?? null,
+      },
+      activeTenantId: session.activeTenantId ?? null,
+      activeWorkspaceId: session.activeWorkspaceId ?? null,
+    } satisfies AppSession;
+  })();
+
+  if (!baseSession) {
     return null;
   }
 
+  const memberships = await listUserMemberships(baseSession.user.id);
+  if (!memberships.length) {
+    return {
+      ...baseSession,
+      activeTenantId: null,
+      activeWorkspaceId: null,
+    };
+  }
+
+  const preferredWorkspace = await readActiveWorkspacePreference();
+  const activeMembership = memberships.find((membership) =>
+    preferredWorkspace
+    && membership.tenantId === preferredWorkspace.tenantId
+    && membership.workspaceId === preferredWorkspace.workspaceId,
+  ) ?? memberships.find((membership) => membership.isDefaultWorkspace) ?? memberships[0];
+
   return {
-    user: {
-      id: session.user.id,
-      email: session.user.email,
-      fullName: session.user.name ?? null,
-      image: session.user.image ?? null,
-    },
-    activeTenantId: session.activeTenantId ?? null,
-    activeWorkspaceId: session.activeWorkspaceId ?? null,
+    ...baseSession,
+    activeTenantId: activeMembership?.tenantId ?? null,
+    activeWorkspaceId: activeMembership?.workspaceId ?? null,
   };
 }

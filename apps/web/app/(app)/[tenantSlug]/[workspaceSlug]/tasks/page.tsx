@@ -46,8 +46,12 @@ export default async function TasksPage({ params, searchParams }: PageProps) {
   const route = await params;
   const query = await searchParams;
 
-  if (!session?.activeTenantId || !session.activeWorkspaceId) {
-    throw new Error("Unauthorized");
+  if (!session?.user?.id) {
+    redirect("/signin");
+  }
+
+  if (!session.activeTenantId || !session.activeWorkspaceId) {
+    redirect("/onboarding");
   }
 
   const activeRoute = await getActiveWorkspaceRoute({

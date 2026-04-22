@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getWorkspaceShellData } from "./workspace-screen-data";
 import { MobileBottomNav } from "./mobile-bottom-nav";
@@ -15,7 +16,7 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
   const route = await params;
 
   if (!session?.user?.id) {
-    throw new Error("Unauthorized");
+    redirect("/signin");
   }
 
   const shell = await getWorkspaceShellData({
@@ -36,8 +37,10 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
           <WorkspaceSwitcher
             value={`/${route.tenantSlug}/${route.workspaceSlug}`}
             options={shell.contexts.map((context) => ({
+              tenantId: context.tenantId,
               tenantSlug: context.tenantSlug,
               tenantName: context.tenantName,
+              workspaceId: context.workspaceId,
               workspaceSlug: context.workspaceSlug,
               workspaceName: context.workspaceName,
               role: context.role,

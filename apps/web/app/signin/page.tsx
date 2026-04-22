@@ -45,8 +45,8 @@ export default function SignInPage() {
           <div className="kicker">Controlled access</div>
           <h1>Enter the command center.</h1>
           <p>
-            Use Google for normal organization access, or use the demo flow while you seed the first tenant and
-            workspace on local or staging environments.
+            Use Google for normal organization access. If your account does not belong to a workspace yet, the app
+            will guide you into setup after sign-in. Use the demo flow only for local or staging seed access.
           </p>
           <div className="hero-actions">
             <a className="button-primary" href="/api/auth/signin/google?callbackUrl=/">

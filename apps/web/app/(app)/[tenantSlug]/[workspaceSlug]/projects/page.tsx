@@ -25,8 +25,12 @@ export default async function ProjectsPage({ params }: PageProps) {
   const session = await getSession();
   const route = await params;
 
-  if (!session?.activeTenantId || !session.activeWorkspaceId) {
-    throw new Error("Unauthorized");
+  if (!session?.user?.id) {
+    redirect("/signin");
+  }
+
+  if (!session.activeTenantId || !session.activeWorkspaceId) {
+    redirect("/onboarding");
   }
 
   const activeRoute = await getActiveWorkspaceRoute({

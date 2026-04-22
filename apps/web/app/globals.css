@@ -119,7 +119,7 @@ select {
   bottom: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
   background: rgba(248, 246, 239, 0.96);
@@ -461,6 +461,27 @@ select {
   gap: 14px;
 }
 
+.form-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.form-grid input,
+.form-grid textarea,
+.form-grid select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text);
+  padding: 12px 14px;
+}
+
+.form-grid textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
 .field-hint-row {
   display: flex;
   flex-wrap: wrap;
@@ -507,6 +528,11 @@ select {
   gap: 12px;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.list-row {
+  display: grid;
+  gap: 6px;
 }
 
 .action-toggle-row {
@@ -636,6 +662,44 @@ select {
   border-color: rgba(180, 35, 24, 0.18);
 }
 
+.admin-record-list {
+  display: grid;
+  gap: 12px;
+}
+
+.compact-record-card {
+  padding: 16px;
+}
+
+.admin-inline-actions {
+  gap: 12px;
+  align-content: start;
+}
+
+.member-invite-card {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(24, 35, 45, 0.08);
+}
+
+.form-error {
+  margin: 0;
+  color: var(--danger);
+}
+
+.onboarding-shell {
+  padding-top: 20px;
+  padding-bottom: 32px;
+}
+
+.onboarding-hero {
+  align-items: start;
+}
+
+.onboarding-card {
+  width: 100%;
+}
+
 .filter-card {
   margin-bottom: 16px;
 }
@@ -758,6 +822,10 @@ select {
   .record-card {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .admin-inline-actions {
+    min-width: 220px;
   }
 
   .record-card-actions {
