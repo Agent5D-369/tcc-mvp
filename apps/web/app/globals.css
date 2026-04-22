@@ -183,6 +183,12 @@ textarea {
   gap: 20px;
 }
 
+.management-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.8fr;
+  gap: 20px;
+}
+
 .action-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
@@ -349,6 +355,52 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.grid-span-2 {
+  grid-column: span 1;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.entity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(24, 35, 45, 0.08);
+}
+
+.entity-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.entity-copy,
+.entity-editor,
+.entity-actions {
+  display: grid;
+}
+
+.entity-copy,
+.entity-editor {
+  gap: 10px;
+}
+
+.entity-actions {
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  gap: 10px;
+}
+
+.button-danger {
+  color: var(--danger);
+  border-color: rgba(180, 35, 24, 0.18);
+}
+
 .task-row {
   display: flex;
   justify-content: space-between;
@@ -369,6 +421,7 @@ textarea {
 @media (max-width: 980px) {
   .hero,
   .dashboard-grid,
+  .management-grid,
   .action-grid,
   .project-grid {
     grid-template-columns: 1fr;
@@ -398,6 +451,11 @@ textarea {
 
   .task-row {
     flex-direction: column;
+  }
+
+  .entity-row,
+  .entity-actions {
+    grid-template-columns: 1fr;
   }
 
   .task-status-field {

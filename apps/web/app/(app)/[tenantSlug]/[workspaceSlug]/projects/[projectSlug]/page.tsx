@@ -3,32 +3,20 @@ import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { DecisionManagerCard } from "./decision-manager-card";
 import { CreateDecisionCard } from "./create-decision-card";
 import { CreateMeetingCard } from "./create-meeting-card";
 import { CreateMilestoneCard } from "./create-milestone-card";
 import { CreateTaskCard } from "./create-task-card";
-import { TaskStatusList } from "./task-status-list";
+import { MeetingManagerCard } from "./meeting-manager-card";
+import { MilestoneManagerCard } from "./milestone-manager-card";
+import { ProjectSettingsCard } from "./project-settings-card";
+import { getBadgeClass } from "./project-room-utils";
+import { TaskManagerCard } from "./task-manager-card";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string; projectSlug: string }>;
 };
-
-function getBadgeClass(kind: string) {
-  switch (kind) {
-    case "green":
-    case "active":
-      return "badge badge-success";
-    case "yellow":
-    case "paused":
-    case "medium":
-      return "badge badge-warn";
-    case "red":
-    case "urgent":
-      return "badge badge-danger";
-    default:
-      return "badge badge-neutral";
-  }
-}
 
 export default async function ProjectWorkspacePage({ params }: PageProps) {
   const session = await getSession();
@@ -108,75 +96,21 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         <CreateMeetingCard projectId={data.project.id} />
       </section>
 
-      <section className="project-grid" style={{ marginBottom: 20 }}>
-        <section className="card">
-          <h2>Next actions</h2>
-          {data.nextActions.length ? (
-            <TaskStatusList tasks={data.nextActions} statuses={data.availableStatuses} />
-          ) : (
-            <p className="empty-note">No open next actions found.</p>
-          )}
-        </section>
+      <section className="management-grid" style={{ marginBottom: 20 }}>
+        <ProjectSettingsCard
+          project={data.project}
+          workspaceHref={`/${route.tenantSlug}/${route.workspaceSlug}`}
+        />
+        <TaskManagerCard tasks={data.allTasks} statuses={data.availableStatuses} />
+      </section>
 
-        <section className="card">
-          <h2>Decision log</h2>
-          {data.decisions.length ? (
-            <ul className="list">
-              {data.decisions.map((decision) => (
-                <li key={decision.id}>
-                  <strong>{decision.title}</strong>
-                  <div className="meta-row">
-                    <span className={getBadgeClass(decision.status)}>{decision.status}</span>
-                    {decision.decidedAt ? (
-                      <span className="badge badge-neutral">{new Date(decision.decidedAt).toLocaleDateString()}</span>
-                    ) : null}
-                  </div>
-                  <div className="muted">{decision.decisionText}</div>
-                  {decision.context ? <div className="muted">{decision.context}</div> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No decisions recorded yet.</p>
-          )}
-        </section>
+      <section className="project-grid" style={{ marginBottom: 20 }}>
+        <MilestoneManagerCard milestones={data.milestones} />
+        <DecisionManagerCard decisions={data.decisions} />
+        <MeetingManagerCard meetings={data.recentMeetings} />
       </section>
 
       <section className="project-grid">
-        <section className="card">
-          <h2>Milestones</h2>
-          {data.milestones.length ? (
-            <ul className="list">
-              {data.milestones.map((milestone) => (
-                <li key={milestone.id}>
-                  <strong>{milestone.name}</strong>
-                  <div className="muted">{milestone.description || "No milestone description yet."}</div>
-                  {milestone.dueAt ? <div className="muted">Due {new Date(milestone.dueAt).toLocaleDateString()}</div> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No milestones tracked yet.</p>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Recent meetings</h2>
-          {data.recentMeetings.length ? (
-            <ul className="list">
-              {data.recentMeetings.map((meeting) => (
-                <li key={meeting.id}>
-                  <strong>{meeting.title}</strong>
-                  <div className="muted">{meeting.summary || "No meeting summary yet."}</div>
-                  {meeting.meetingAt ? <div className="muted">{new Date(meeting.meetingAt).toLocaleString()}</div> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No project meetings captured yet.</p>
-          )}
-        </section>
-
         <section className="card">
           <h2>Coordination threads</h2>
           {data.conversations.length ? (

@@ -17,6 +17,8 @@ export async function getProjectOverview(args: {
       status: schema.projects.status,
       health: schema.projects.health,
       ownerId: schema.projects.ownerId,
+      startDate: schema.projects.startDate,
+      targetDate: schema.projects.targetDate,
       workspaceId: schema.projects.workspaceId,
       workspaceName: schema.workspaces.name,
       workspaceSlug: schema.workspaces.slug,
@@ -57,20 +59,19 @@ export async function getProjectOverview(args: {
     })
     .from(schema.decisionLog)
     .where(eq(schema.decisionLog.projectId, project.id))
-    .orderBy(desc(schema.decisionLog.updatedAt))
-    .limit(5);
+    .orderBy(desc(schema.decisionLog.updatedAt));
 
   const recentMeetings = await db
     .select({
       id: schema.meetingNotes.id,
       title: schema.meetingNotes.title,
       summary: schema.meetingNotes.summary,
+      notesMarkdown: schema.meetingNotes.notesMarkdown,
       meetingAt: schema.meetingNotes.meetingAt,
     })
     .from(schema.meetingNotes)
     .where(eq(schema.meetingNotes.projectId, project.id))
-    .orderBy(desc(schema.meetingNotes.meetingAt))
-    .limit(5);
+    .orderBy(desc(schema.meetingNotes.meetingAt), desc(schema.meetingNotes.updatedAt));
 
   const conversations = await db
     .select({
@@ -126,10 +127,34 @@ export async function getProjectOverview(args: {
     ))
     .orderBy(asc(schema.taskStatuses.sortOrder), asc(schema.taskStatuses.name));
 
+  const allTasks = await db
+    .select({
+      id: schema.tasks.id,
+      title: schema.tasks.title,
+      description: schema.tasks.description,
+      dueAt: schema.tasks.dueAt,
+      priority: schema.tasks.priority,
+      statusId: schema.taskStatuses.id,
+      statusName: schema.taskStatuses.name,
+      statusKind: schema.taskStatuses.kind,
+    })
+    .from(schema.tasks)
+    .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
+    .where(eq(schema.tasks.projectId, project.id))
+    .orderBy(
+      asc(sql`case when ${schema.taskStatuses.kind} = 'done' then 1 else 0 end`),
+      asc(schema.tasks.dueAt),
+      desc(schema.tasks.updatedAt),
+    );
+
   const summary = taskSummary[0] ?? { total: 0, done: 0, blocked: 0 };
 
   return {
-    project,
+    project: {
+      ...project,
+      startDate: project.startDate ? project.startDate.toISOString() : null,
+      targetDate: project.targetDate ? project.targetDate.toISOString() : null,
+    },
     milestoneCount: milestones.length,
     milestones: milestones.map((m) => ({
       ...m,
@@ -157,6 +182,10 @@ export async function getProjectOverview(args: {
     nextActions: nextActions.map((t) => ({
       ...t,
       dueAt: t.dueAt ? t.dueAt.toISOString() : null,
+    })),
+    allTasks: allTasks.map((task) => ({
+      ...task,
+      dueAt: task.dueAt ? task.dueAt.toISOString() : null,
     })),
     availableStatuses: availableStatuses.map(({ sortOrder: _sortOrder, ...status }) => status),
   };
