@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
+import { MobileSheet } from "./mobile-sheet";
 import { toDateInputValue } from "./project-room-utils";
 
 type ProjectSettingsCardProps = {
@@ -28,6 +29,7 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
   const [startDate, setStartDate] = useState(toDateInputValue(project.startDate));
   const [targetDate, setTargetDate] = useState(toDateInputValue(project.targetDate));
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -77,6 +79,7 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
         return;
       }
 
+      setNotice(`Saved project "${nextName.trim()}".`);
       setIsEditing(false);
       router.refresh();
     });
@@ -115,12 +118,14 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
           className="button-secondary"
           onClick={() => {
             setError(null);
+            setNotice(null);
             setIsEditing((value) => !value);
           }}
         >
-          {isEditing ? "Close" : "Edit"}
+          Edit
         </button>
       </div>
+      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
 
       <div className="stack compact-stack">
         <div className="record-summary-grid">
@@ -144,7 +149,15 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
         <p className="entity-preview">{project.summary || "No project summary yet."}</p>
       </div>
 
-      {isEditing ? (
+      <MobileSheet
+        open={isEditing}
+        title={`Edit ${project.name}`}
+        description="Project settings stay out of the way until the scope, timing, or execution posture actually changes."
+        onClose={() => {
+          setError(null);
+          setIsEditing(false);
+        }}
+      >
         <form action={onSubmit} className="form-grid section-divider">
           <label className="field">
             <span className="field-label">Project name</span>
@@ -201,7 +214,7 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
               />
             </label>
           </div>
-          {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+          {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
           <div className="entity-actions">
             <button className="button-primary" type="submit" disabled={isPending}>
               {isPending ? "Saving..." : "Save project"}
@@ -211,7 +224,7 @@ export function ProjectSettingsCard({ project, workspaceHref }: ProjectSettingsC
             </button>
           </div>
         </form>
-      ) : null}
+      </MobileSheet>
     </section>
   );
 }

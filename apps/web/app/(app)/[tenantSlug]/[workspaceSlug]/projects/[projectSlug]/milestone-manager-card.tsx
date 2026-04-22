@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
+import { MobileSheet } from "./mobile-sheet";
 import { toDateInputValue } from "./project-room-utils";
 
 type MilestoneManagerCardProps = {
@@ -16,8 +17,12 @@ type MilestoneManagerCardProps = {
 
 function MilestoneEditor({
   milestone,
+  onClose,
+  onSaved,
 }: {
   milestone: MilestoneManagerCardProps["milestones"][number];
+  onClose: () => void;
+  onSaved: (message: string) => void;
 }) {
   const router = useRouter();
   const [name, setName] = useState(milestone.name);
@@ -54,6 +59,8 @@ function MilestoneEditor({
         return;
       }
 
+      onSaved(`Saved milestone "${name.trim()}".`);
+      onClose();
       router.refresh();
     });
   }
@@ -77,12 +84,14 @@ function MilestoneEditor({
         return;
       }
 
+      onSaved(`Deleted milestone "${milestone.name}".`);
+      onClose();
       router.refresh();
     });
   }
 
   return (
-    <div className="entity-editor section-divider">
+    <div className="form-grid">
       <label className="field">
         <span className="field-label">Milestone name</span>
         <input value={name} onChange={(event) => setName(event.target.value)} />
@@ -100,7 +109,7 @@ function MilestoneEditor({
         <span className="field-label">Due date</span>
         <input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
       </label>
-      {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+      {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
       <div className="entity-actions">
         <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
           {isPending ? "Saving..." : "Save milestone"}
@@ -114,7 +123,8 @@ function MilestoneEditor({
 }
 
 export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeMilestone, setActiveMilestone] = useState<MilestoneManagerCardProps["milestones"][number] | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <section className="card">
@@ -122,6 +132,7 @@ export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) 
         <h2>Milestones</h2>
         <span className="muted">{milestones.length} tracked</span>
       </div>
+      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {milestones.length ? (
         <div className="stack compact-stack">
           {milestones.map((milestone) => (
@@ -137,18 +148,35 @@ export function MilestoneManagerCard({ milestones }: MilestoneManagerCardProps) 
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => setEditingId((current) => current === milestone.id ? null : milestone.id)}
+                  onClick={() => {
+                    setNotice(null);
+                    setActiveMilestone(milestone);
+                  }}
                 >
-                  {editingId === milestone.id ? "Close" : "Edit"}
+                  Edit
                 </button>
               </div>
-              {editingId === milestone.id ? <MilestoneEditor milestone={milestone} /> : null}
             </div>
           ))}
         </div>
       ) : (
         <p className="empty-note">No milestones tracked yet.</p>
       )}
+      <MobileSheet
+        open={Boolean(activeMilestone)}
+        title={activeMilestone ? `Edit ${activeMilestone.name}` : "Edit milestone"}
+        description="Keep milestone review compact. Open the editor only when timing or scope changed."
+        onClose={() => setActiveMilestone(null)}
+      >
+        {activeMilestone ? (
+          <MilestoneEditor
+            key={activeMilestone.id}
+            milestone={activeMilestone}
+            onClose={() => setActiveMilestone(null)}
+            onSaved={setNotice}
+          />
+        ) : null}
+      </MobileSheet>
     </section>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
+import { MobileSheet } from "./mobile-sheet";
 import { toDateTimeInputValue } from "./project-room-utils";
 
 type MeetingManagerCardProps = {
@@ -17,8 +18,12 @@ type MeetingManagerCardProps = {
 
 function MeetingEditor({
   meeting,
+  onClose,
+  onSaved,
 }: {
   meeting: MeetingManagerCardProps["meetings"][number];
+  onClose: () => void;
+  onSaved: (message: string) => void;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(meeting.title);
@@ -57,6 +62,8 @@ function MeetingEditor({
         return;
       }
 
+      onSaved(`Saved meeting "${title.trim()}".`);
+      onClose();
       router.refresh();
     });
   }
@@ -80,12 +87,14 @@ function MeetingEditor({
         return;
       }
 
+      onSaved(`Deleted meeting "${meeting.title}".`);
+      onClose();
       router.refresh();
     });
   }
 
   return (
-    <div className="entity-editor section-divider">
+    <div className="form-grid">
       <label className="field">
         <span className="field-label">Meeting title</span>
         <input value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -112,7 +121,7 @@ function MeetingEditor({
           placeholder="Capture decisions, blockers, and action items."
         />
       </label>
-      {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+      {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
       <div className="entity-actions">
         <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
           {isPending ? "Saving..." : "Save meeting"}
@@ -126,7 +135,8 @@ function MeetingEditor({
 }
 
 export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeMeeting, setActiveMeeting] = useState<MeetingManagerCardProps["meetings"][number] | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <section className="card">
@@ -134,6 +144,7 @@ export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
         <h2>Meetings</h2>
         <span className="muted">{meetings.length} tracked</span>
       </div>
+      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {meetings.length ? (
         <div className="stack compact-stack">
           {meetings.map((meeting) => (
@@ -149,18 +160,35 @@ export function MeetingManagerCard({ meetings }: MeetingManagerCardProps) {
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => setEditingId((current) => current === meeting.id ? null : meeting.id)}
+                  onClick={() => {
+                    setNotice(null);
+                    setActiveMeeting(meeting);
+                  }}
                 >
-                  {editingId === meeting.id ? "Close" : "Edit"}
+                  Edit
                 </button>
               </div>
-              {editingId === meeting.id ? <MeetingEditor meeting={meeting} /> : null}
             </div>
           ))}
         </div>
       ) : (
         <p className="empty-note">No meetings captured yet.</p>
       )}
+      <MobileSheet
+        open={Boolean(activeMeeting)}
+        title={activeMeeting ? `Edit ${activeMeeting.title}` : "Edit meeting"}
+        description="Meeting edits live in one focused sheet so the record list stays easy to scan."
+        onClose={() => setActiveMeeting(null)}
+      >
+        {activeMeeting ? (
+          <MeetingEditor
+            key={activeMeeting.id}
+            meeting={activeMeeting}
+            onClose={() => setActiveMeeting(null)}
+            onSaved={setNotice}
+          />
+        ) : null}
+      </MobileSheet>
     </section>
   );
 }

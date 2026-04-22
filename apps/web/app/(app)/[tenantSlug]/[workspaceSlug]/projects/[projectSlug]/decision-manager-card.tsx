@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
+import { MobileSheet } from "./mobile-sheet";
 import { getBadgeClass } from "./project-room-utils";
 
 type DecisionManagerCardProps = {
@@ -18,8 +19,12 @@ type DecisionManagerCardProps = {
 
 function DecisionEditor({
   decision,
+  onClose,
+  onSaved,
 }: {
   decision: DecisionManagerCardProps["decisions"][number];
+  onClose: () => void;
+  onSaved: (message: string) => void;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(decision.title);
@@ -58,6 +63,8 @@ function DecisionEditor({
         return;
       }
 
+      onSaved(`Saved decision "${title.trim()}".`);
+      onClose();
       router.refresh();
     });
   }
@@ -81,12 +88,14 @@ function DecisionEditor({
         return;
       }
 
+      onSaved(`Deleted decision "${decision.title}".`);
+      onClose();
       router.refresh();
     });
   }
 
   return (
-    <div className="entity-editor section-divider">
+    <div className="form-grid">
       <label className="field">
         <span className="field-label">Decision title</span>
         <input value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -118,7 +127,7 @@ function DecisionEditor({
           <option value="superseded">superseded</option>
         </select>
       </label>
-      {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+      {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
       <div className="entity-actions">
         <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
           {isPending ? "Saving..." : "Save decision"}
@@ -132,7 +141,8 @@ function DecisionEditor({
 }
 
 export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeDecision, setActiveDecision] = useState<DecisionManagerCardProps["decisions"][number] | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <section className="card">
@@ -140,6 +150,7 @@ export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
         <h2>Decisions</h2>
         <span className="muted">{decisions.length} tracked</span>
       </div>
+      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {decisions.length ? (
         <div className="stack compact-stack">
           {decisions.map((decision) => (
@@ -161,18 +172,35 @@ export function DecisionManagerCard({ decisions }: DecisionManagerCardProps) {
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => setEditingId((current) => current === decision.id ? null : decision.id)}
+                  onClick={() => {
+                    setNotice(null);
+                    setActiveDecision(decision);
+                  }}
                 >
-                  {editingId === decision.id ? "Close" : "Edit"}
+                  Edit
                 </button>
               </div>
-              {editingId === decision.id ? <DecisionEditor decision={decision} /> : null}
             </div>
           ))}
         </div>
       ) : (
         <p className="empty-note">No decisions recorded yet.</p>
       )}
+      <MobileSheet
+        open={Boolean(activeDecision)}
+        title={activeDecision ? `Edit ${activeDecision.title}` : "Edit decision"}
+        description="Review the decision log first. Edit only when the call, context, or status changed."
+        onClose={() => setActiveDecision(null)}
+      >
+        {activeDecision ? (
+          <DecisionEditor
+            key={activeDecision.id}
+            decision={activeDecision}
+            onClose={() => setActiveDecision(null)}
+            onSaved={setNotice}
+          />
+        ) : null}
+      </MobileSheet>
     </section>
   );
 }

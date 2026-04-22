@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../../lib/read-api-result";
+import { MobileSheet } from "./mobile-sheet";
 import { getBadgeClass, toDateInputValue } from "./project-room-utils";
 
 type TaskManagerCardProps = {
@@ -28,9 +29,13 @@ type EditableTask = TaskManagerCardProps["tasks"][number];
 function TaskEditor({
   task,
   statuses,
+  onClose,
+  onSaved,
 }: {
   task: EditableTask;
   statuses: TaskManagerCardProps["statuses"];
+  onClose: () => void;
+  onSaved: (message: string) => void;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(task.title);
@@ -71,6 +76,8 @@ function TaskEditor({
         return;
       }
 
+      onSaved(`Saved task "${title.trim()}".`);
+      onClose();
       router.refresh();
     });
   }
@@ -94,12 +101,14 @@ function TaskEditor({
         return;
       }
 
+      onSaved(`Deleted task "${task.title}".`);
+      onClose();
       router.refresh();
     });
   }
 
   return (
-    <div className="entity-editor section-divider">
+    <div className="form-grid">
       <label className="field">
         <span className="field-label">Task title</span>
         <input value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -139,7 +148,7 @@ function TaskEditor({
           ))}
         </select>
       </label>
-      {error ? <p style={{ color: "var(--danger)", margin: 0 }}>{error}</p> : null}
+      {error ? <p className="feedback-banner feedback-error">{error}</p> : null}
       <div className="entity-actions">
         <button className="button-primary" type="button" onClick={onSave} disabled={isPending}>
           {isPending ? "Saving..." : "Save task"}
@@ -153,7 +162,8 @@ function TaskEditor({
 }
 
 export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeTask, setActiveTask] = useState<EditableTask | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <section className="card">
@@ -161,6 +171,7 @@ export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
         <h2>Task management</h2>
         <span className="muted">{tasks.length} tracked</span>
       </div>
+      {notice ? <p className="feedback-banner feedback-success">{notice}</p> : null}
       {tasks.length ? (
         <div className="stack compact-stack">
           {tasks.map((task) => (
@@ -180,18 +191,36 @@ export function TaskManagerCard({ tasks, statuses }: TaskManagerCardProps) {
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => setEditingId((current) => current === task.id ? null : task.id)}
+                  onClick={() => {
+                    setNotice(null);
+                    setActiveTask(task);
+                  }}
                 >
-                  {editingId === task.id ? "Close" : "Edit"}
+                  Edit
                 </button>
               </div>
-              {editingId === task.id ? <TaskEditor task={task} statuses={statuses} /> : null}
             </div>
           ))}
         </div>
       ) : (
         <p className="empty-note">No tasks yet. Add a next action above to start operating the project.</p>
       )}
+      <MobileSheet
+        open={Boolean(activeTask)}
+        title={activeTask ? `Edit ${activeTask.title}` : "Edit task"}
+        description="Adjust the task only when something changed. Review mode stays compact until you need it."
+        onClose={() => setActiveTask(null)}
+      >
+        {activeTask ? (
+          <TaskEditor
+            key={activeTask.id}
+            task={activeTask}
+            statuses={statuses}
+            onClose={() => setActiveTask(null)}
+            onSaved={setNotice}
+          />
+        ) : null}
+      </MobileSheet>
     </section>
   );
 }
