@@ -43,7 +43,7 @@ export async function getWorkspaceHome(args: {
       eq(schema.projects.status, "active"),
     ));
 
-  const now = new Date();
+  const nowIso = new Date().toISOString();
 
   const [taskMetrics] = await db
     .select({
@@ -56,7 +56,7 @@ export async function getWorkspaceHome(args: {
       overdueTasks: sql<number>`
         count(*) filter (
           where ${schema.tasks.dueAt} is not null
-          and ${schema.tasks.dueAt} < ${now}
+          and ${schema.tasks.dueAt} < ${nowIso}
           and (
             ${schema.taskStatuses.kind} is null
             or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')
