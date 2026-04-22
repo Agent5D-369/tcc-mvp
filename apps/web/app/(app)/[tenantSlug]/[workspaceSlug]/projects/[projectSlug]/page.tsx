@@ -101,12 +101,14 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="project-grid" style={{ marginBottom: 20 }}>
+      <section className="action-grid" style={{ marginBottom: 20 }}>
         <CreateTaskCard projectId={data.project.id} />
         <CreateMilestoneCard projectId={data.project.id} />
         <CreateDecisionCard projectId={data.project.id} />
         <CreateMeetingCard projectId={data.project.id} />
+      </section>
 
+      <section className="project-grid" style={{ marginBottom: 20 }}>
         <section className="card">
           <h2>Next actions</h2>
           {data.nextActions.length ? (
