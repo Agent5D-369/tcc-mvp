@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { CreateTaskCard } from "./create-task-card";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string; projectSlug: string }>;
@@ -97,6 +98,8 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
       </section>
 
       <section className="project-grid" style={{ marginBottom: 20 }}>
+        <CreateTaskCard projectId={data.project.id} />
+
         <section className="card">
           <h2>Next actions</h2>
           {data.nextActions.length ? (

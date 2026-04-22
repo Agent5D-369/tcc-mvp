@@ -322,7 +322,8 @@ textarea {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -334,6 +335,12 @@ textarea {
 .field textarea {
   resize: vertical;
   min-height: 110px;
+}
+
+.form-split {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (max-width: 980px) {
@@ -362,6 +369,10 @@ textarea {
 
   .metric-grid,
   .stat-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .form-split {
     grid-template-columns: 1fr;
   }
 
