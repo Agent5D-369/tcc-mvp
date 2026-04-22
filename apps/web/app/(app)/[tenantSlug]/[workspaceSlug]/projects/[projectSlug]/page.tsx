@@ -4,6 +4,7 @@ import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { CreateDecisionCard } from "./create-decision-card";
+import { CreateMeetingCard } from "./create-meeting-card";
 import { CreateMilestoneCard } from "./create-milestone-card";
 import { CreateTaskCard } from "./create-task-card";
 import { TaskStatusList } from "./task-status-list";
@@ -104,6 +105,7 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         <CreateTaskCard projectId={data.project.id} />
         <CreateMilestoneCard projectId={data.project.id} />
         <CreateDecisionCard projectId={data.project.id} />
+        <CreateMeetingCard projectId={data.project.id} />
 
         <section className="card">
           <h2>Next actions</h2>
