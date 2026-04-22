@@ -4,9 +4,18 @@ import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
 
+function normalizeSlug(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 const createProjectSchema = z.object({
-  name: z.string().min(1),
-  slug: z.string().min(1),
+  name: z.string().trim().min(1).max(120),
+  slug: z.string().trim().min(1).max(120),
   summary: z.string().optional(),
 });
 
@@ -36,13 +45,32 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await resolveTenantContext();
     const body = createProjectSchema.parse(await req.json());
+    const slug = normalizeSlug(body.slug || body.name);
+
+    if (!slug) {
+      return NextResponse.json({ error: "A valid project slug is required" }, { status: 400 });
+    }
+
+    const [existingProject] = await db
+      .select({ id: schema.projects.id })
+      .from(schema.projects)
+      .where(and(
+        eq(schema.projects.tenantId, ctx.tenantId),
+        eq(schema.projects.workspaceId, ctx.workspaceId),
+        eq(schema.projects.slug, slug),
+      ))
+      .limit(1);
+
+    if (existingProject) {
+      return NextResponse.json({ error: "A project with that slug already exists" }, { status: 409 });
+    }
 
     const [project] = await db.insert(schema.projects).values({
       tenantId: ctx.tenantId,
       workspaceId: ctx.workspaceId,
       name: body.name,
-      slug: body.slug,
-      summary: body.summary || null,
+      slug,
+      summary: body.summary?.trim() || null,
       status: "draft",
       health: "unknown",
       ownerId: ctx.userId,

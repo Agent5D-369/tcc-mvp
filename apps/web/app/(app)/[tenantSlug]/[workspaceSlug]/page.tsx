@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getWorkspaceHome } from "@workspace-kit/home";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { CreateProjectCard } from "./create-project-card";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string }>;
@@ -151,6 +152,8 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
         </div>
 
         <aside className="stack">
+          <CreateProjectCard tenantSlug={route.tenantSlug} workspaceSlug={route.workspaceSlug} />
+
           <section className="card">
             <h2>Open tasks</h2>
             {data.openTasks.length ? (
