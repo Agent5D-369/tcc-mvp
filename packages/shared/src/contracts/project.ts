@@ -39,6 +39,9 @@ export type ProjectOverviewPayload = {
   conversations: Array<{
     id: string;
     title: string;
+    threadType: string;
+    pinned: boolean;
+    messageCount: number;
     updatedAt: string | null;
   }>;
   health: {

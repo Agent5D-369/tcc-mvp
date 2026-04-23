@@ -316,6 +316,10 @@ select {
   padding: 18px;
 }
 
+.compact-card {
+  padding: 16px;
+}
+
 .stat-tile {
   padding: 14px;
   border-radius: var(--radius-sm);
@@ -674,6 +678,36 @@ select {
 .admin-inline-actions {
   gap: 12px;
   align-content: start;
+}
+
+.thread-message-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.thread-message {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(24, 35, 45, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.thread-message-assistant {
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.thread-message-content {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.thread-compose-form {
+  border-top: 1px solid rgba(24, 35, 45, 0.08);
+  padding-top: 16px;
 }
 
 .member-invite-card {

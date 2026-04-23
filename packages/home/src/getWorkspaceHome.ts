@@ -232,6 +232,12 @@ export async function getWorkspaceHome(args: {
   if (metrics.overdueTasks > 0) {
     attentionItems.push(`${metrics.overdueTasks} overdue task${metrics.overdueTasks === 1 ? "" : "s"} need reassignment or a fresh due date.`);
   }
+  if (metrics.blockedTasks > 0) {
+    attentionItems.push(`${metrics.blockedTasks} blocked task${metrics.blockedTasks === 1 ? "" : "s"} need an unblock decision or owner follow-up.`);
+  }
+  if (metrics.urgentTasks > 0) {
+    attentionItems.push(`${metrics.urgentTasks} high-priority task${metrics.urgentTasks === 1 ? "" : "s"} should be reviewed before lower-priority work.`);
+  }
   if (metrics.decisionsLogged === 0) {
     attentionItems.push("Capture at least one decision so new teammates can understand what is already settled.");
   }

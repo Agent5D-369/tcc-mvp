@@ -8,6 +8,7 @@ import { MeetingManagerCard } from "./meeting-manager-card";
 import { MilestoneManagerCard } from "./milestone-manager-card";
 import { ProjectCapturePanel } from "./project-capture-panel";
 import { ProjectSettingsCard } from "./project-settings-card";
+import { CreateThreadCard } from "../../threads/create-thread-card";
 import { getBadgeClass } from "./project-room-utils";
 import { TaskManagerCard } from "./task-manager-card";
 
@@ -137,13 +138,33 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
 
       <section className="project-grid">
         <section className="card">
-          <h2>Coordination threads</h2>
+          <div className="card-header-row">
+            <h2>Coordination threads</h2>
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/threads`}>
+              View all
+            </Link>
+          </div>
           {data.conversations.length ? (
             <ul className="list">
               {data.conversations.map((conversation) => (
                 <li key={conversation.id}>
-                  <strong>{conversation.title}</strong>
+                  <div className="split">
+                    <div>
+                      <strong>{conversation.title}</strong>
+                      <div className="meta-row">
+                        <span className="badge badge-neutral">{conversation.threadType}</span>
+                        {conversation.pinned ? <span className="badge badge-success">pinned</span> : null}
+                      </div>
+                    </div>
+                    <Link
+                      className="button-secondary"
+                      href={`/${route.tenantSlug}/${route.workspaceSlug}/threads/${conversation.id}`}
+                    >
+                      Open
+                    </Link>
+                  </div>
                   <div className="muted">
+                    {conversation.messageCount} message{conversation.messageCount === 1 ? "" : "s"} •{" "}
                     {conversation.updatedAt ? `Updated ${new Date(conversation.updatedAt).toLocaleString()}` : "No recent activity"}
                   </div>
                 </li>
@@ -152,6 +173,20 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
           ) : (
             <p className="empty-note">No coordination threads linked yet.</p>
           )}
+        </section>
+
+        <section className="card">
+          <CreateThreadCard
+            tenantSlug={route.tenantSlug}
+            workspaceSlug={route.workspaceSlug}
+            compact
+            defaultProjectId={data.project.id}
+            projects={[{
+              id: data.project.id,
+              name: data.project.name,
+              slug: data.project.slug,
+            }]}
+          />
         </section>
 
         <section className="card">

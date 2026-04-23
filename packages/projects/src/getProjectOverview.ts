@@ -77,10 +77,15 @@ export async function getProjectOverview(args: {
     .select({
       id: schema.threads.id,
       title: schema.threads.title,
+      threadType: schema.threads.threadType,
+      pinned: schema.threads.pinned,
       updatedAt: schema.threads.updatedAt,
+      messageCount: sql<number>`count(${schema.messages.id})`.mapWith(Number),
     })
     .from(schema.threads)
+    .leftJoin(schema.messages, eq(schema.messages.threadId, schema.threads.id))
     .where(eq(schema.threads.projectId, project.id))
+    .groupBy(schema.threads.id)
     .orderBy(desc(schema.threads.updatedAt))
     .limit(5);
 
@@ -170,6 +175,7 @@ export async function getProjectOverview(args: {
     })),
     conversations: conversations.map((t) => ({
       ...t,
+      messageCount: Number(t.messageCount || 0),
       updatedAt: t.updatedAt ? t.updatedAt.toISOString() : null,
     })),
     health: {

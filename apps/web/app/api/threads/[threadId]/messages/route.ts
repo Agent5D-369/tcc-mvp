@@ -8,6 +8,7 @@ import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContex
 const createMessageSchema = z.object({
   content: z.string().min(1),
   model: z.string().optional(),
+  generateReply: z.boolean().optional(),
 });
 
 type RouteParams = {
@@ -57,14 +58,56 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { threadId } = await params;
     const body = createMessageSchema.parse(await req.json());
 
-    const result = await completeThreadMessage({
-      tenantId: ctx.tenantId,
-      workspaceId: ctx.workspaceId,
-      threadId,
-      userId: ctx.userId,
-      content: body.content,
-      model: body.model,
-    });
+    let result;
+
+    if (body.generateReply) {
+      result = await completeThreadMessage({
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId,
+        threadId,
+        userId: ctx.userId,
+        content: body.content,
+        model: body.model,
+      });
+    } else {
+      const [thread] = await db
+        .select({ id: schema.threads.id })
+        .from(schema.threads)
+        .where(and(
+          eq(schema.threads.id, threadId),
+          eq(schema.threads.tenantId, ctx.tenantId),
+          eq(schema.threads.workspaceId, ctx.workspaceId),
+        ))
+        .limit(1);
+
+      if (!thread) {
+        return NextResponse.json({ error: "Thread not found" }, { status: 404 });
+      }
+
+      const [userMessage] = await db
+        .insert(schema.messages)
+        .values({
+          tenantId: ctx.tenantId,
+          threadId,
+          role: "user",
+          authorType: "user",
+          authorId: ctx.userId,
+          content: body.content,
+          tokenUsageJson: {},
+          citationsJson: [],
+        })
+        .returning();
+
+      await db
+        .update(schema.threads)
+        .set({ updatedAt: new Date() })
+        .where(eq(schema.threads.id, threadId));
+
+      result = {
+        userMessage,
+        assistantMessage: null,
+      };
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
