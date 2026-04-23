@@ -24,6 +24,7 @@ async function getDemoSession(): Promise<AppSession | null> {
     },
     activeTenantId: demoSession.tenantId,
     activeWorkspaceId: demoSession.workspaceId,
+    isPlatformAdmin: false,
   };
 }
 
@@ -44,6 +45,7 @@ export async function getSession(): Promise<AppSession | null> {
       },
       activeTenantId: session.activeTenantId ?? null,
       activeWorkspaceId: session.activeWorkspaceId ?? null,
+      isPlatformAdmin: session.isPlatformAdmin === true,
     } satisfies AppSession;
   })();
 

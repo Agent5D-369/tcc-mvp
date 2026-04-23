@@ -196,6 +196,20 @@ export async function resolveMembershipByEmail(email: string) {
   return member ?? null;
 }
 
+export async function resolveUserByEmail(email: string) {
+  const [user] = await db
+    .select({
+      id: schema.users.id,
+      email: schema.users.email,
+      fullName: schema.users.fullName,
+    })
+    .from(schema.users)
+    .where(eq(schema.users.email, email))
+    .limit(1);
+
+  return user ?? null;
+}
+
 export async function resolveMembershipByUserId(userId: string) {
   const [member] = await db
     .select({
@@ -438,6 +452,76 @@ export async function createWorkspaceForTenant(args: {
     workspaceId: workspace.id,
     workspaceSlug: workspace.slug,
     workspaceName: workspace.name,
+  };
+}
+
+export async function updateWorkspaceDetails(args: {
+  tenantId: string;
+  workspaceId: string;
+  workspaceName: string;
+  workspaceDescription?: string | null;
+}) {
+  const [existingWorkspace] = await db
+    .select({
+      id: schema.workspaces.id,
+      tenantId: schema.workspaces.tenantId,
+      slug: schema.workspaces.slug,
+    })
+    .from(schema.workspaces)
+    .where(and(
+      eq(schema.workspaces.id, args.workspaceId),
+      eq(schema.workspaces.tenantId, args.tenantId),
+    ))
+    .limit(1);
+
+  if (!existingWorkspace) {
+    throw new Error("Workspace not found");
+  }
+
+  const nextName = args.workspaceName.trim();
+  const nextSlug = nextName === ""
+    ? existingWorkspace.slug
+    : slugifyName(nextName) === existingWorkspace.slug
+      ? existingWorkspace.slug
+      : await ensureUniqueWorkspaceSlug(args.tenantId, nextName);
+
+  const [tenant] = await db
+    .select({
+      slug: schema.tenants.slug,
+    })
+    .from(schema.tenants)
+    .where(eq(schema.tenants.id, args.tenantId))
+    .limit(1);
+
+  if (!tenant) {
+    throw new Error("Tenant not found");
+  }
+
+  const [workspace] = await db
+    .update(schema.workspaces)
+    .set({
+      name: nextName,
+      slug: nextSlug,
+      description: args.workspaceDescription?.trim() || null,
+      updatedAt: new Date(),
+    })
+    .where(and(
+      eq(schema.workspaces.id, args.workspaceId),
+      eq(schema.workspaces.tenantId, args.tenantId),
+    ))
+    .returning({
+      id: schema.workspaces.id,
+      slug: schema.workspaces.slug,
+      name: schema.workspaces.name,
+      description: schema.workspaces.description,
+    });
+
+  return {
+    tenantSlug: tenant.slug,
+    workspaceId: workspace.id,
+    workspaceSlug: workspace.slug,
+    workspaceName: workspace.name,
+    workspaceDescription: workspace.description,
   };
 }
 

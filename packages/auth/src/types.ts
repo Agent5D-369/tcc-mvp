@@ -7,4 +7,5 @@ export type AppSession = {
   };
   activeTenantId: string | null;
   activeWorkspaceId: string | null;
+  isPlatformAdmin: boolean;
 };

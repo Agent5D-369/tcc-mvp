@@ -4,8 +4,10 @@ import { db, schema } from "@workspace-kit/db";
 import {
   ensureUserWorkspaceMembership,
   resolveMembershipByEmail,
+  resolveUserByEmail,
   resolveMembershipByUserId,
 } from "./membership";
+import { isPlatformAdminEmail } from "./platformAdmin";
 
 function shouldAutoProvisionMemberships() {
   return process.env.AUTH_AUTO_PROVISION_MEMBERSHIPS === "true";
@@ -68,12 +70,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const email = (user?.email || token.email || "").toString().toLowerCase();
       if (!email) return token;
 
+      const accountUser = await resolveUserByEmail(email);
+      if (accountUser) {
+        token.userId = accountUser.id;
+        token.fullName = accountUser.fullName;
+      }
+
+      token.isPlatformAdmin = isPlatformAdminEmail(email);
+
       const membership = await resolveMembershipByEmail(email);
       if (membership) {
         token.userId = membership.userId;
         token.fullName = membership.fullName;
         token.activeTenantId = membership.tenantId;
         token.activeWorkspaceId = membership.workspaceId;
+      } else {
+        token.activeTenantId = null;
+        token.activeWorkspaceId = null;
       }
 
       return token;
@@ -92,6 +105,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.name = (token.fullName as string | undefined) ?? session.user.name ?? null;
       session.activeTenantId = (token.activeTenantId as string | undefined) ?? null;
       session.activeWorkspaceId = (token.activeWorkspaceId as string | undefined) ?? null;
+      session.isPlatformAdmin = token.isPlatformAdmin === true;
 
       return session;
     },

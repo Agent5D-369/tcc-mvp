@@ -30,6 +30,7 @@ AUTH_SECRET=
 AUTH_TRUST_HOST=true
 NEXTAUTH_URL=http://localhost:3000
 AUTH_AUTO_PROVISION_MEMBERSHIPS=false
+AUTH_PLATFORM_ADMIN_EMAILS=
 AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
 AUTH_DEMO_EMAIL=demo@example.com
@@ -72,6 +73,7 @@ AUTH_SECRET=replace-with-a-long-random-string
 AUTH_TRUST_HOST=true
 NEXTAUTH_URL=https://your-service.up.railway.app
 AUTH_AUTO_PROVISION_MEMBERSHIPS=false
+AUTH_PLATFORM_ADMIN_EMAILS=
 AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
 AUTH_DEMO_EMAIL=demo@example.com
@@ -100,6 +102,7 @@ The seed script creates:
 ## Notes
 
 - The demo credentials flow is for controlled staging access. It is not a password system.
+- `AUTH_PLATFORM_ADMIN_EMAILS` is a comma-separated allowlist for operator accounts that must always be able to sign in and bootstrap tenants/workspaces even before normal member access exists.
 - Railway deploys now run migrations only. Seed data should be run intentionally, not on every deploy.
 - Google sign-in no longer auto-creates owner memberships by default. Set `AUTH_AUTO_PROVISION_MEMBERSHIPS=true` only for controlled onboarding flows.
 - Root routing redirects signed-in users to their active workspace when membership data is present.

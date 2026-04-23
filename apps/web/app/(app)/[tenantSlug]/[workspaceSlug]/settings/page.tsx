@@ -3,6 +3,7 @@ import { getSession, listWorkspaceMembers } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { CreateTenantCard } from "./create-tenant-card";
 import { CreateWorkspaceCard } from "./create-workspace-card";
+import { WorkspaceSettingsCard } from "./workspace-settings-card";
 import { WorkspaceMembersCard } from "./workspace-members-card";
 import { getTenantWorkspaceIndex, getWorkspaceShellData } from "../workspace-screen-data";
 
@@ -77,12 +78,23 @@ export default async function SettingsPage({ params }: PageProps) {
                 <strong>Workspace description</strong>
                 <div className="muted">{shell.currentWorkspace.workspaceDescription || "No workspace description yet."}</div>
               </div>
-              <div className="list-row">
+            <div className="list-row">
                 <strong>Accessible contexts</strong>
                 <div className="muted">{shell.contexts.length} workspace access path{shell.contexts.length === 1 ? "" : "s"}</div>
               </div>
+              <div className="list-row">
+                <strong>Account type</strong>
+                <div className="muted">{session.isPlatformAdmin ? "Platform admin" : "Standard member account"}</div>
+              </div>
             </div>
           </section>
+
+          <WorkspaceSettingsCard
+            workspaceId={shell.currentWorkspace.workspaceId}
+            workspaceName={shell.currentWorkspace.workspaceName}
+            workspaceDescription={shell.currentWorkspace.workspaceDescription}
+            canManage={canManage}
+          />
 
           <section className="card">
             <div className="section-heading">
