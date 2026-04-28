@@ -26,6 +26,16 @@ export type HomePayload = {
     health: "green" | "yellow" | "red" | "unknown";
     openTaskCount: number;
   }>;
+  openTasks: Array<{
+    id: string;
+    title: string;
+    priority: "low" | "medium" | "high" | "urgent";
+    dueAt: string | null;
+    statusName: string | null;
+    statusKind: string | null;
+    projectName: string;
+    projectSlug: string;
+  }>;
   recentDecisions: Array<{
     id: string;
     title: string;
