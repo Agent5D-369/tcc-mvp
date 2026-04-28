@@ -7,7 +7,7 @@ QuickLaunch is the Phase 1 foundation for Team Command Center: a multitenant exe
 - Shared-db multitenancy with tenant, workspace, and membership boundaries
 - Command-center workspace home for priorities, risks, meetings, decisions, captures, approval queues, and compiled memory
 - Project workspaces with milestones, next actions, decisions, and coordination context
-- Amora Command Center Lite pilot shape: manual communication dump-in, AI-ready extraction proposals, approval-first queues, and wiki-lite memory pages
+- Pilot workspace shape: manual communication dump-in, AI-ready extraction proposals, approval-first queues, and wiki-lite memory pages
 - Capture Hub v0 for saving meeting transcripts, email threads, voice notes, copied chat summaries, and founder dumps as source-backed Interactions
 - Extract Proposals v0 for turning a captured Interaction into pending approval items, with OpenRouter support and a deterministic fallback
 - Approval Inbox v0 for approving or rejecting proposed tasks, decisions, memory items, and compiled-page revisions
@@ -76,9 +76,9 @@ The seed script creates:
 
 - one demo tenant
 - one operations workspace
-- one Amora pilot workspace
+- one pilot workspace
 - one active project for the original Phase 1 rollout
-- one active project for the Amora capture/approval/memory pilot
+- one active project for the capture/approval/memory pilot
 - task statuses
 - approval queues: Leadership, Hiring / Team, Ops
 - a sample captured interaction
@@ -89,7 +89,7 @@ The seed script creates:
 - meeting notes
 - execution tasks
 
-After seeding, the default demo route points to `/quicklaunch-demo/amora-command`.
+After seeding, the default demo route points to `/quicklaunch-demo/pilot-command`.
 
 ## Notes
 

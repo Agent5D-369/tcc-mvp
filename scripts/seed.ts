@@ -272,20 +272,20 @@ async function main() {
       eq(schema.memberships.userId, user.id),
     ));
 
-  let [amoraWorkspace] = await db
+  let [pilotWorkspace] = await db
     .select()
     .from(schema.workspaces)
     .where(and(
       eq(schema.workspaces.tenantId, tenant.id),
-      eq(schema.workspaces.slug, "amora-command"),
+      eq(schema.workspaces.slug, "pilot-command"),
     ))
     .limit(1);
 
-  if (!amoraWorkspace) {
-    [amoraWorkspace] = await db.insert(schema.workspaces).values({
+  if (!pilotWorkspace) {
+    [pilotWorkspace] = await db.insert(schema.workspaces).values({
       tenantId: tenant.id,
-      name: "Amora Command Center",
-      slug: "amora-command",
+      name: "Pilot Command Center",
+      slug: "pilot-command",
       description: "Pilot workspace for turning meeting, email, voice, and chat dumps into approved tasks, decisions, and source-backed memory.",
       visibility: "private",
       createdBy: user.id,
@@ -294,7 +294,7 @@ async function main() {
 
   await db.insert(schema.memberships).values({
     tenantId: tenant.id,
-    workspaceId: amoraWorkspace.id,
+    workspaceId: pilotWorkspace.id,
     userId: user.id,
     role: "owner",
     isDefaultWorkspace: true,
@@ -307,27 +307,27 @@ async function main() {
     set: { isDefaultWorkspace: true, role: "owner" },
   });
 
-  let [amoraProject] = await db
+  let [pilotProject] = await db
     .select()
     .from(schema.projects)
     .where(and(
-      eq(schema.projects.workspaceId, amoraWorkspace.id),
+      eq(schema.projects.workspaceId, pilotWorkspace.id),
       eq(schema.projects.slug, "pilot-operating-brain"),
     ))
     .limit(1);
 
-  if (!amoraProject) {
-    [amoraProject] = await db.insert(schema.projects).values({
+  if (!pilotProject) {
+    [pilotProject] = await db.insert(schema.projects).values({
       tenantId: tenant.id,
-      workspaceId: amoraWorkspace.id,
-      name: "Amora Pilot Operating Brain",
+      workspaceId: pilotWorkspace.id,
+      name: "Pilot Operating Brain",
       slug: "pilot-operating-brain",
       summary: "A narrow pilot for capturing raw communication, extracting next steps, approving changes, and maintaining a living project brain.",
       status: "active",
       health: "yellow",
       ownerId: user.id,
       metadataJson: {
-        pilot: "amora",
+        pilot: "generic",
         scope: "capture-approval-memory",
       },
     }).returning();
@@ -336,7 +336,7 @@ async function main() {
   for (const status of statuses) {
     await db.insert(schema.taskStatuses).values({
       tenantId: tenant.id,
-      workspaceId: amoraWorkspace.id,
+      workspaceId: pilotWorkspace.id,
       ...status,
       color: null,
     }).onConflictDoNothing();
@@ -366,34 +366,34 @@ async function main() {
   for (const queue of queueSeeds) {
     await db.insert(schema.queues).values({
       tenantId: tenant.id,
-      workspaceId: amoraWorkspace.id,
+      workspaceId: pilotWorkspace.id,
       ...queue,
-      metadataJson: { pilot: "amora" },
+      metadataJson: { pilot: "generic" },
     }).onConflictDoNothing();
   }
 
-  const amoraQueues = await db
+  const pilotQueues = await db
     .select()
     .from(schema.queues)
-    .where(eq(schema.queues.workspaceId, amoraWorkspace.id));
+    .where(eq(schema.queues.workspaceId, pilotWorkspace.id));
 
-  const queueBySlug = Object.fromEntries(amoraQueues.map((queue) => [queue.slug, queue]));
+  const queueBySlug = Object.fromEntries(pilotQueues.map((queue) => [queue.slug, queue]));
 
   const captureTitle = "Founder ops and hiring dump";
-  let [amoraInteraction] = await db
+  let [pilotInteraction] = await db
     .select()
     .from(schema.interactions)
     .where(and(
-      eq(schema.interactions.workspaceId, amoraWorkspace.id),
+      eq(schema.interactions.workspaceId, pilotWorkspace.id),
       eq(schema.interactions.title, captureTitle),
     ))
     .limit(1);
 
-  if (!amoraInteraction) {
-    [amoraInteraction] = await db.insert(schema.interactions).values({
+  if (!pilotInteraction) {
+    [pilotInteraction] = await db.insert(schema.interactions).values({
       tenantId: tenant.id,
-      workspaceId: amoraWorkspace.id,
-      projectId: amoraProject.id,
+      workspaceId: pilotWorkspace.id,
+      projectId: pilotProject.id,
       queueId: queueBySlug.ops?.id ?? null,
       title: captureTitle,
       sourceType: "manual",
@@ -404,7 +404,7 @@ async function main() {
       artifactId: null,
       capturedBy: user.id,
       metadataJson: {
-        pilot: "amora",
+        pilot: "generic",
         intakeType: "voice_note",
       },
     }).returning();
@@ -426,11 +426,11 @@ async function main() {
     {
       targetType: "decision",
       title: "Use approval-first capture before automating writes",
-      bodyMarkdown: "Record that Amora pilot output must be reviewed before becoming tasks, decisions, or memory.",
+      bodyMarkdown: "Record that pilot workspace output must be reviewed before becoming tasks, decisions, or memory.",
       queueId: queueBySlug.leadership?.id ?? null,
       sourceExcerpt: "We need one place to approve next steps and keep decisions visible.",
       proposedPatchJson: {
-        decisionText: "Amora Command Center Lite will use approval-first capture for meeting, email, voice, and copied chat dumps.",
+        decisionText: "Pilot Command Center will use approval-first capture for meeting, email, voice, and copied chat dumps.",
         status: "accepted",
       },
     },
@@ -452,7 +452,7 @@ async function main() {
       .select({ id: schema.proposals.id })
       .from(schema.proposals)
       .where(and(
-        eq(schema.proposals.workspaceId, amoraWorkspace.id),
+        eq(schema.proposals.workspaceId, pilotWorkspace.id),
         eq(schema.proposals.title, proposal.title),
       ))
       .limit(1);
@@ -460,9 +460,9 @@ async function main() {
     if (!existing.length) {
       await db.insert(schema.proposals).values({
         tenantId: tenant.id,
-        workspaceId: amoraWorkspace.id,
-        projectId: amoraProject.id,
-        interactionId: amoraInteraction.id,
+        workspaceId: pilotWorkspace.id,
+        projectId: pilotProject.id,
+        interactionId: pilotInteraction.id,
         status: "pending",
         confidenceBps: 7800,
         proposedBy: user.id,
@@ -479,7 +479,7 @@ async function main() {
       title: "Project Overview",
       pageType: "overview",
       summary: "The pilot turns messy communication into approved tasks, decisions, questions, and memory.",
-      content: "# Project Overview\n\nAmora Command Center Lite is a narrow pilot for capture, approval, and continuity.\n",
+      content: "# Project Overview\n\nPilot Command Center is a narrow pilot for capture, approval, and continuity.\n",
     },
     {
       slug: "current-roles",
@@ -523,7 +523,7 @@ async function main() {
       .select()
       .from(schema.compiledPages)
       .where(and(
-        eq(schema.compiledPages.workspaceId, amoraWorkspace.id),
+        eq(schema.compiledPages.workspaceId, pilotWorkspace.id),
         eq(schema.compiledPages.slug, pageSeed.slug),
       ))
       .limit(1);
@@ -531,8 +531,8 @@ async function main() {
     if (!compiledPage) {
       [compiledPage] = await db.insert(schema.compiledPages).values({
         tenantId: tenant.id,
-        workspaceId: amoraWorkspace.id,
-        projectId: amoraProject.id,
+        workspaceId: pilotWorkspace.id,
+        projectId: pilotProject.id,
         slug: pageSeed.slug,
         title: pageSeed.title,
         pageType: pageSeed.pageType,
@@ -540,7 +540,7 @@ async function main() {
         summary: pageSeed.summary,
         sourceConfidenceBps: 7000,
         humanOwnerId: user.id,
-        metadataJson: { pilot: "amora" },
+        metadataJson: { pilot: "generic" },
       }).returning();
     }
 
@@ -557,10 +557,10 @@ async function main() {
       await db.insert(schema.compiledPageRevisions).values({
         tenantId: tenant.id,
         pageId: compiledPage.id,
-        interactionId: amoraInteraction.id,
+        interactionId: pilotInteraction.id,
         revisionNumber: 1,
         contentMarkdown: pageSeed.content,
-        changeSummary: "Initial Amora pilot page shell.",
+        changeSummary: "Initial pilot workspace page shell.",
         reviewStatus: "approved",
         reviewedBy: user.id,
         reviewedAt: new Date(),
@@ -571,9 +571,9 @@ async function main() {
   console.log({
     userId: user.id,
     tenantId: tenant.id,
-    workspaceId: amoraWorkspace.id,
-    projectId: amoraProject.id,
-    route: `/${tenant.slug}/${amoraWorkspace.slug}`,
+    workspaceId: pilotWorkspace.id,
+    projectId: pilotProject.id,
+    route: `/${tenant.slug}/${pilotWorkspace.slug}`,
   });
 }
 

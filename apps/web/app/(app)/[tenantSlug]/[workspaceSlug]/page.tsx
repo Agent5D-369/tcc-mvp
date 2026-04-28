@@ -60,7 +60,7 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
             <div className="kicker">Workspace recovery</div>
             <h1>This workspace is available, but the dashboard brief needs attention.</h1>
             <p>
-              Continue the Amora pilot through the direct workflow pages while the command brief catches up.
+              Continue the pilot workspace through the direct workflow pages while the command brief catches up.
             </p>
             <div className="hero-actions">
               <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/capture`}>

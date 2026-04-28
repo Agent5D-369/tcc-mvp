@@ -53,7 +53,7 @@ export default async function CapturePage({ params, searchParams }: PageProps) {
           <div className="meta-row">
             <span className="badge badge-neutral">Approval-first</span>
             <span className="badge badge-neutral">Source-backed</span>
-            <span className="badge badge-neutral">Amora pilot</span>
+            <span className="badge badge-neutral">Workspace memory</span>
           </div>
         </div>
 
