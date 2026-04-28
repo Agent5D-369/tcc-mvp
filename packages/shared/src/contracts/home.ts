@@ -15,8 +15,10 @@ export type HomePayload = {
     openTasks: number;
     overdueTasks: number;
     decisionsLogged: number;
-    pendingApprovals: number;
-    capturedInteractions: number;
+    blockedTasks: number;
+    urgentTasks: number;
+    dueSoonTasks: number;
+    unassignedTasks: number;
   };
   activeProjects: Array<{
     id: string;
@@ -40,26 +42,23 @@ export type HomePayload = {
     summary: string | null;
     projectName: string | null;
   }>;
-  recentInteractions: Array<{
+  openTasks: Array<{
     id: string;
     title: string;
-    sourceLabel: string | null;
-    summary: string | null;
-    queueName: string | null;
-    createdAt: string;
+    priority: "low" | "medium" | "high" | "urgent";
+    dueAt: string | null;
+    projectName: string | null;
+    projectSlug: string | null;
+    statusKind: "todo" | "in_progress" | "blocked" | "done" | "canceled" | null;
   }>;
-  approvalQueues: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    pendingCount: number;
-  }>;
-  compiledPages: Array<{
+  focusTasks: Array<{
     id: string;
     title: string;
-    slug: string;
-    summary: string | null;
-    updatedAt: string;
+    priority: "low" | "medium" | "high" | "urgent";
+    dueAt: string | null;
+    projectName: string | null;
+    projectSlug: string | null;
+    statusKind: "todo" | "in_progress" | "blocked" | "done" | "canceled" | null;
   }>;
   attentionItems: string[];
   commandBrief: {

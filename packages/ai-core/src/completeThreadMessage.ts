@@ -1,9 +1,10 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
 import { createOpenRouterChat, type ChatMessage } from "./openrouter";
 
 export async function completeThreadMessage(args: {
   tenantId: string;
+  workspaceId: string;
   threadId: string;
   userId: string;
   content: string;
@@ -21,7 +22,11 @@ export async function completeThreadMessage(args: {
     })
     .from(schema.threads)
     .leftJoin(schema.agentDefinitions, eq(schema.agentDefinitions.id, schema.threads.agentId))
-    .where(eq(schema.threads.id, args.threadId))
+    .where(and(
+      eq(schema.threads.id, args.threadId),
+      eq(schema.threads.tenantId, args.tenantId),
+      eq(schema.threads.workspaceId, args.workspaceId),
+    ))
     .limit(1);
 
   const thread = threadRows[0];

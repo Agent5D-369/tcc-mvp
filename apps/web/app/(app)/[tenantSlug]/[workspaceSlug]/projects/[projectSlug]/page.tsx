@@ -2,34 +2,43 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
+import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { DecisionManagerCard } from "./decision-manager-card";
+import { MeetingManagerCard } from "./meeting-manager-card";
+import { MilestoneManagerCard } from "./milestone-manager-card";
+import { ProjectCapturePanel } from "./project-capture-panel";
+import { ProjectSettingsCard } from "./project-settings-card";
+import { CreateThreadCard } from "../../threads/create-thread-card";
+import { getBadgeClass } from "./project-room-utils";
+import { TaskManagerCard } from "./task-manager-card";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string; projectSlug: string }>;
 };
 
-function getBadgeClass(kind: string) {
-  switch (kind) {
-    case "green":
-    case "active":
-      return "badge badge-success";
-    case "yellow":
-    case "paused":
-    case "medium":
-      return "badge badge-warn";
-    case "red":
-    case "urgent":
-      return "badge badge-danger";
-    default:
-      return "badge badge-neutral";
-  }
-}
-
 export default async function ProjectWorkspacePage({ params }: PageProps) {
   const session = await getSession();
   const route = await params;
 
-  if (!session?.activeTenantId) {
+  if (!session?.user?.id) {
     redirect("/signin");
+  }
+
+  if (!session.activeTenantId || !session.activeWorkspaceId) {
+    redirect("/onboarding");
+  }
+
+  const activeRoute = await getActiveWorkspaceRoute({
+    tenantId: session.activeTenantId,
+    workspaceId: session.activeWorkspaceId,
+  });
+
+  if (!activeRoute) {
+    throw new Error("Active workspace route not found");
+  }
+
+  if (activeRoute.tenantSlug !== route.tenantSlug || activeRoute.workspaceSlug !== route.workspaceSlug) {
+    redirect(`/${activeRoute.tenantSlug}/${activeRoute.workspaceSlug}`);
   }
 
   const data = await getProjectOverview({
@@ -39,14 +48,14 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
   });
 
   return (
-    <main className="page-shell">
+    <main className="page-shell app-page-shell">
       <div className="breadcrumbs">
         <Link href={`/${route.tenantSlug}/${route.workspaceSlug}`}>{data.project.workspaceName}</Link>
         <span>/</span>
         <span>{data.project.name}</span>
       </div>
 
-      <section className="hero">
+      <section className="hero hero-compact">
         <div>
           <div className="kicker">Project workspace</div>
           <h1>{data.project.name}</h1>
@@ -82,86 +91,80 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
         </div>
       </section>
 
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <div className="kicker">Capture</div>
+            <h2 className="section-title">Add new operating records</h2>
+          </div>
+          <p className="empty-note">Keep capture lightweight. Open one focused form, save, and return to review mode quickly.</p>
+        </div>
+      </section>
+      <section style={{ marginBottom: 20 }}>
+        <ProjectCapturePanel projectId={data.project.id} />
+      </section>
+
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <div className="kicker">Operate</div>
+            <h2 className="section-title">Run the project</h2>
+          </div>
+          <p className="empty-note">Review first. Use edit actions only when you need to change the project or a task.</p>
+        </div>
+      </section>
+      <section className="management-grid" style={{ marginBottom: 20 }}>
+        <ProjectSettingsCard
+          project={data.project}
+          workspaceHref={`/${route.tenantSlug}/${route.workspaceSlug}`}
+        />
+        <TaskManagerCard tasks={data.allTasks} statuses={data.availableStatuses} />
+      </section>
+
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <div className="kicker">Records</div>
+            <h2 className="section-title">Review and update project history</h2>
+          </div>
+          <p className="empty-note">Milestones, decisions, and meetings stay compact until you choose Edit.</p>
+        </div>
+      </section>
       <section className="project-grid" style={{ marginBottom: 20 }}>
-        <section className="card">
-          <h2>Next actions</h2>
-          {data.nextActions.length ? (
-            <ul className="list">
-              {data.nextActions.map((task) => (
-                <li key={task.id}>
-                  <strong>{task.title}</strong>
-                  <div className="meta-row">
-                    <span className={getBadgeClass(task.priority)}>{task.priority}</span>
-                    {task.dueAt ? <span className="badge badge-neutral">Due {new Date(task.dueAt).toLocaleDateString()}</span> : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No open next actions found.</p>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Milestones</h2>
-          {data.milestones.length ? (
-            <ul className="list">
-              {data.milestones.map((milestone) => (
-                <li key={milestone.id}>
-                  <strong>{milestone.name}</strong>
-                  <div className="muted">{milestone.description || "No milestone description yet."}</div>
-                  {milestone.dueAt ? <div className="muted">Due {new Date(milestone.dueAt).toLocaleDateString()}</div> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No milestones tracked yet.</p>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Decision log</h2>
-          {data.decisions.length ? (
-            <ul className="list">
-              {data.decisions.map((decision) => (
-                <li key={decision.id}>
-                  <strong>{decision.title}</strong>
-                  <div className="muted">{decision.decisionText}</div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No decisions recorded yet.</p>
-          )}
-        </section>
+        <MilestoneManagerCard milestones={data.milestones} />
+        <DecisionManagerCard decisions={data.decisions} />
+        <MeetingManagerCard meetings={data.recentMeetings} />
       </section>
 
       <section className="project-grid">
         <section className="card">
-          <h2>Recent meetings</h2>
-          {data.recentMeetings.length ? (
-            <ul className="list">
-              {data.recentMeetings.map((meeting) => (
-                <li key={meeting.id}>
-                  <strong>{meeting.title}</strong>
-                  <div className="muted">{meeting.summary || "No meeting summary yet."}</div>
-                  {meeting.meetingAt ? <div className="muted">{new Date(meeting.meetingAt).toLocaleString()}</div> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-note">No project meetings captured yet.</p>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Coordination threads</h2>
+          <div className="card-header-row">
+            <h2>Coordination threads</h2>
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/threads`}>
+              View all
+            </Link>
+          </div>
           {data.conversations.length ? (
             <ul className="list">
               {data.conversations.map((conversation) => (
                 <li key={conversation.id}>
-                  <strong>{conversation.title}</strong>
+                  <div className="split">
+                    <div>
+                      <strong>{conversation.title}</strong>
+                      <div className="meta-row">
+                        <span className="badge badge-neutral">{conversation.threadType}</span>
+                        {conversation.pinned ? <span className="badge badge-success">pinned</span> : null}
+                      </div>
+                    </div>
+                    <Link
+                      className="button-secondary"
+                      href={`/${route.tenantSlug}/${route.workspaceSlug}/threads/${conversation.id}`}
+                    >
+                      Open
+                    </Link>
+                  </div>
                   <div className="muted">
+                    {conversation.messageCount} message{conversation.messageCount === 1 ? "" : "s"} •{" "}
                     {conversation.updatedAt ? `Updated ${new Date(conversation.updatedAt).toLocaleString()}` : "No recent activity"}
                   </div>
                 </li>
@@ -170,6 +173,20 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
           ) : (
             <p className="empty-note">No coordination threads linked yet.</p>
           )}
+        </section>
+
+        <section className="card">
+          <CreateThreadCard
+            tenantSlug={route.tenantSlug}
+            workspaceSlug={route.workspaceSlug}
+            compact
+            defaultProjectId={data.project.id}
+            projects={[{
+              id: data.project.id,
+              name: data.project.name,
+              slug: data.project.slug,
+            }]}
+          />
         </section>
 
         <section className="card">

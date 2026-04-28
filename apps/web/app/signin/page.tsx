@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("demo@example.com");
@@ -12,15 +11,18 @@ export default function SignInPage() {
     e.preventDefault();
     setError(null);
 
-    const result = await signIn("credentials", {
-      email,
-      name,
-      redirect: false,
-      callbackUrl: "/quicklaunch-demo/demo-command",
+    const response = await fetch("/api/demo-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, name }),
     });
 
-    if (result?.error) {
-      setError(result.error);
+    const result = await response.json();
+
+    if (!response.ok) {
+      setError(result.error || "Demo sign-in failed");
       return;
     }
 
@@ -43,25 +45,18 @@ export default function SignInPage() {
           <div className="kicker">Controlled access</div>
           <h1>Enter the command center.</h1>
           <p>
-            Use Google for normal organization access, or use the demo flow to open the shared Team Command Center
-            workspace.
+            Use Google for normal organization access. If your account does not belong to a workspace yet, the app
+            will guide you into setup after sign-in. Use the demo flow only for local or staging seed access.
           </p>
           <div className="hero-actions">
-            <button
-              className="button-primary"
-              onClick={() => signIn("google", { callbackUrl: "/" })}
-              type="button"
-            >
+            <a className="button-primary" href="/api/auth/signin/google?callbackUrl=/">
               Continue with Google
-            </button>
+            </a>
           </div>
         </div>
 
         <div className="card">
           <h2>Demo sign-in</h2>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Shareable demo access uses <strong>demo@example.com</strong> and opens the demo workspace directly.
-          </p>
           <form onSubmit={onDemoLogin} style={{ display: "grid", gap: 12 }}>
             <input
               value={email}

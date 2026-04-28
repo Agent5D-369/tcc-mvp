@@ -17,6 +17,8 @@ export async function getProjectOverview(args: {
       status: schema.projects.status,
       health: schema.projects.health,
       ownerId: schema.projects.ownerId,
+      startDate: schema.projects.startDate,
+      targetDate: schema.projects.targetDate,
       workspaceId: schema.projects.workspaceId,
       workspaceName: schema.workspaces.name,
       workspaceSlug: schema.workspaces.slug,
@@ -50,35 +52,40 @@ export async function getProjectOverview(args: {
     .select({
       id: schema.decisionLog.id,
       title: schema.decisionLog.title,
+      context: schema.decisionLog.context,
       decisionText: schema.decisionLog.decisionText,
       status: schema.decisionLog.status,
       decidedAt: schema.decisionLog.decidedAt,
     })
     .from(schema.decisionLog)
     .where(eq(schema.decisionLog.projectId, project.id))
-    .orderBy(desc(schema.decisionLog.updatedAt))
-    .limit(5);
+    .orderBy(desc(schema.decisionLog.updatedAt));
 
   const recentMeetings = await db
     .select({
       id: schema.meetingNotes.id,
       title: schema.meetingNotes.title,
       summary: schema.meetingNotes.summary,
+      notesMarkdown: schema.meetingNotes.notesMarkdown,
       meetingAt: schema.meetingNotes.meetingAt,
     })
     .from(schema.meetingNotes)
     .where(eq(schema.meetingNotes.projectId, project.id))
-    .orderBy(desc(schema.meetingNotes.meetingAt))
-    .limit(5);
+    .orderBy(desc(schema.meetingNotes.meetingAt), desc(schema.meetingNotes.updatedAt));
 
   const conversations = await db
     .select({
       id: schema.threads.id,
       title: schema.threads.title,
+      threadType: schema.threads.threadType,
+      pinned: schema.threads.pinned,
       updatedAt: schema.threads.updatedAt,
+      messageCount: sql<number>`count(${schema.messages.id})`.mapWith(Number),
     })
     .from(schema.threads)
+    .leftJoin(schema.messages, eq(schema.messages.threadId, schema.threads.id))
     .where(eq(schema.threads.projectId, project.id))
+    .groupBy(schema.threads.id)
     .orderBy(desc(schema.threads.updatedAt))
     .limit(5);
 
@@ -98,6 +105,9 @@ export async function getProjectOverview(args: {
       title: schema.tasks.title,
       dueAt: schema.tasks.dueAt,
       priority: schema.tasks.priority,
+      statusId: schema.taskStatuses.id,
+      statusName: schema.taskStatuses.name,
+      statusKind: schema.taskStatuses.kind,
     })
     .from(schema.tasks)
     .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
@@ -108,10 +118,48 @@ export async function getProjectOverview(args: {
     .orderBy(asc(schema.tasks.dueAt), desc(schema.tasks.updatedAt))
     .limit(5);
 
+  const availableStatuses = await db
+    .select({
+      id: schema.taskStatuses.id,
+      name: schema.taskStatuses.name,
+      kind: schema.taskStatuses.kind,
+      sortOrder: schema.taskStatuses.sortOrder,
+    })
+    .from(schema.taskStatuses)
+    .where(and(
+      eq(schema.taskStatuses.tenantId, tenantId),
+      eq(schema.taskStatuses.workspaceId, project.workspaceId),
+    ))
+    .orderBy(asc(schema.taskStatuses.sortOrder), asc(schema.taskStatuses.name));
+
+  const allTasks = await db
+    .select({
+      id: schema.tasks.id,
+      title: schema.tasks.title,
+      description: schema.tasks.description,
+      dueAt: schema.tasks.dueAt,
+      priority: schema.tasks.priority,
+      statusId: schema.taskStatuses.id,
+      statusName: schema.taskStatuses.name,
+      statusKind: schema.taskStatuses.kind,
+    })
+    .from(schema.tasks)
+    .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
+    .where(eq(schema.tasks.projectId, project.id))
+    .orderBy(
+      asc(sql`case when ${schema.taskStatuses.kind} = 'done' then 1 else 0 end`),
+      asc(schema.tasks.dueAt),
+      desc(schema.tasks.updatedAt),
+    );
+
   const summary = taskSummary[0] ?? { total: 0, done: 0, blocked: 0 };
 
   return {
-    project,
+    project: {
+      ...project,
+      startDate: project.startDate ? project.startDate.toISOString() : null,
+      targetDate: project.targetDate ? project.targetDate.toISOString() : null,
+    },
     milestoneCount: milestones.length,
     milestones: milestones.map((m) => ({
       ...m,
@@ -127,6 +175,7 @@ export async function getProjectOverview(args: {
     })),
     conversations: conversations.map((t) => ({
       ...t,
+      messageCount: Number(t.messageCount || 0),
       updatedAt: t.updatedAt ? t.updatedAt.toISOString() : null,
     })),
     health: {
@@ -140,5 +189,10 @@ export async function getProjectOverview(args: {
       ...t,
       dueAt: t.dueAt ? t.dueAt.toISOString() : null,
     })),
+    allTasks: allTasks.map((task) => ({
+      ...task,
+      dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+    })),
+    availableStatuses: availableStatuses.map(({ sortOrder: _sortOrder, ...status }) => status),
   };
 }

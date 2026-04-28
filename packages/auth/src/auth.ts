@@ -1,23 +1,16 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
-import { asc, desc, eq } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
+import {
+  ensureUserWorkspaceMembership,
+  resolveMembershipByEmail,
+  resolveUserByEmail,
+  resolveMembershipByUserId,
+} from "./membership";
+import { isPlatformAdminEmail } from "./platformAdmin";
 
-async function resolveMembershipByEmail(email: string) {
-  const [member] = await db
-    .select({
-      userId: schema.users.id,
-      fullName: schema.users.fullName,
-      tenantId: schema.memberships.tenantId,
-      workspaceId: schema.memberships.workspaceId,
-    })
-    .from(schema.users)
-    .innerJoin(schema.memberships, eq(schema.memberships.userId, schema.users.id))
-    .where(eq(schema.users.email, email))
-    .orderBy(desc(schema.memberships.isDefaultWorkspace), asc(schema.memberships.joinedAt));
-
-  return member ?? null;
+function shouldAutoProvisionMemberships() {
+  return process.env.AUTH_AUTO_PROVISION_MEMBERSHIPS === "true";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -31,31 +24,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.AUTH_GOOGLE_ID ?? "",
       clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
       allowDangerousEmailAccountLinking: true,
-    }),
-    Credentials({
-      name: "Demo Login",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        name: { label: "Name", type: "text" },
-      },
-      async authorize(credentials) {
-        const email = credentials?.email?.toString().trim().toLowerCase();
-        const name = credentials?.name?.toString().trim() || process.env.AUTH_DEMO_NAME || "QuickLaunch Demo User";
-        const allowedEmails = new Set([
-          "demo@example.com",
-          (process.env.AUTH_DEMO_EMAIL || "demo@example.com").toLowerCase(),
-        ]);
-
-        if (!email || !allowedEmails.has(email)) {
-          return null;
-        }
-
-        return {
-          id: email,
-          email,
-          name,
-        };
-      },
     }),
   ],
   callbacks: {
@@ -85,11 +53,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
       if (!upserted) return false;
+
+      let membership = await resolveMembershipByUserId(upserted.id);
+      if (!membership) {
+        if (shouldAutoProvisionMemberships()) {
+          await ensureUserWorkspaceMembership({
+            userId: upserted.id,
+          });
+          membership = await resolveMembershipByUserId(upserted.id);
+        }
+      }
+
       return true;
     },
     async jwt({ token, user }) {
       const email = (user?.email || token.email || "").toString().toLowerCase();
       if (!email) return token;
+
+      const accountUser = await resolveUserByEmail(email);
+      if (accountUser) {
+        token.userId = accountUser.id;
+        token.fullName = accountUser.fullName;
+      }
+
+      token.isPlatformAdmin = isPlatformAdminEmail(email);
 
       const membership = await resolveMembershipByEmail(email);
       if (membership) {
@@ -97,6 +84,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.fullName = membership.fullName;
         token.activeTenantId = membership.tenantId;
         token.activeWorkspaceId = membership.workspaceId;
+      } else {
+        token.activeTenantId = null;
+        token.activeWorkspaceId = null;
       }
 
       return token;
@@ -115,6 +105,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.name = (token.fullName as string | undefined) ?? session.user.name ?? null;
       session.activeTenantId = (token.activeTenantId as string | undefined) ?? null;
       session.activeWorkspaceId = (token.activeWorkspaceId as string | undefined) ?? null;
+      session.isPlatformAdmin = token.isPlatformAdmin === true;
 
       return session;
     },
