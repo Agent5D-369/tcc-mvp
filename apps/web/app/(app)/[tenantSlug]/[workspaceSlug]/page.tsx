@@ -7,6 +7,9 @@ type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string }>;
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function getHealthBadgeClass(health: string) {
   switch (health) {
     case "green":
@@ -23,6 +26,10 @@ function getHealthBadgeClass(health: string) {
 export default async function WorkspaceHomePage({ params }: PageProps) {
   const session = await getSession();
   const route = await params;
+
+  if (route.workspaceSlug === "amora-command") {
+    redirect(`/${route.tenantSlug}/demo-command`);
+  }
 
   if (!session?.activeTenantId) {
     redirect("/signin");
