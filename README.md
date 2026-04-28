@@ -1,16 +1,20 @@
 # QuickLaunch Team Command Center MVP
 
-QuickLaunch is the Phase 1 foundation for Team Command Center: a multitenant execution workspace for teams that need a single place to run projects, tasks, meetings, and decisions.
+QuickLaunch is the Phase 1 foundation for Team Command Center: a multitenant execution workspace for teams that need a single place to capture communication, approve extracted work, and keep projects, tasks, meetings, decisions, and memory aligned.
 
 ## Phase 1 scope
 
 - Shared-db multitenancy with tenant, workspace, and membership boundaries
-- Command-center workspace home for priorities, risks, meetings, and decisions
+- Command-center workspace home for priorities, risks, meetings, decisions, captures, approval queues, and compiled memory
 - Project workspaces with milestones, next actions, decisions, and coordination context
+- Amora Command Center Lite pilot shape: manual communication dump-in, AI-ready extraction proposals, approval-first queues, and wiki-lite memory pages
+- Capture Hub v0 for saving meeting transcripts, email threads, voice notes, copied chat summaries, and founder dumps as source-backed Interactions
+- Extract Proposals v0 for turning a captured Interaction into pending approval items, with OpenRouter support and a deterministic fallback
+- Approval Inbox v0 for approving or rejecting proposed tasks, decisions, memory items, and compiled-page revisions
 - Auth.js sign-in with Google and controlled demo access
 - Railway-ready deployment configuration for a single web service backed by PostgreSQL
 
-The broader AI, knowledge, and conversation tables remain in the schema for later phases, but the runnable product is no longer positioned as an AI-first workspace.
+The broader AI, knowledge, and conversation tables remain in the schema for later phases. The current MVP keeps the AI value narrow: capture messy meeting/email/voice/chat inputs, propose tasks/decisions/memory, and require human approval before anything becomes operating state.
 
 ## Stack
 
@@ -72,12 +76,20 @@ The seed script creates:
 
 - one demo tenant
 - one operations workspace
-- one active project
+- one Amora pilot workspace
+- one active project for the original Phase 1 rollout
+- one active project for the Amora capture/approval/memory pilot
 - task statuses
+- approval queues: Leadership, Hiring / Team, Ops
+- a sample captured interaction
+- pending task, decision, and compiled-page proposals
+- six compiled memory page shells: Project Overview, Current Roles, Open Questions, Decisions, Hiring Needs, Ops SOPs
 - milestones
 - decisions
 - meeting notes
 - execution tasks
+
+After seeding, the default demo route points to `/quicklaunch-demo/amora-command`.
 
 ## Notes
 

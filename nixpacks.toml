@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ["nodejs_24"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
-cmds = ["corepack enable", "pnpm install --no-frozen-lockfile"]
+cmds = ["npx pnpm@10.0.0 install --no-frozen-lockfile"]
 
 [phases.build]
-cmds = ["pnpm build"]
+cmds = ["npx pnpm@10.0.0 build"]
 
 [start]
-cmd = "pnpm start"
+cmd = "npx pnpm@10.0.0 db:migrate && npx pnpm@10.0.0 start"

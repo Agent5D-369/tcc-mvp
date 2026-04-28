@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getWorkspaceHome } from "@workspace-kit/home";
 
@@ -24,7 +25,7 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
   const route = await params;
 
   if (!session?.activeTenantId) {
-    throw new Error("Unauthorized");
+    redirect("/signin");
   }
 
   const data = await getWorkspaceHome({
@@ -65,6 +66,17 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
               <li key={item}>{item}</li>
             ))}
           </ul>
+          <div className="hero-actions">
+            <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/capture`}>
+              Capture source
+            </Link>
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/approvals`}>
+              Review approvals
+            </Link>
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/knowledge`}>
+              Open memory
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -85,10 +97,44 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           <div className="metric-label">Logged decisions</div>
           <div className="metric-value">{data.metrics.decisionsLogged}</div>
         </article>
+        <article className="metric-card">
+          <div className="metric-label">Pending approvals</div>
+          <div className="metric-value">{data.metrics.pendingApprovals}</div>
+        </article>
+        <article className="metric-card">
+          <div className="metric-label">Captured interactions</div>
+          <div className="metric-value">{data.metrics.capturedInteractions}</div>
+        </article>
       </section>
 
       <section className="dashboard-grid">
         <div className="stack">
+          <section className="card">
+            <h2>Capture loop</h2>
+            {data.recentInteractions.length ? (
+              <ul className="list">
+                {data.recentInteractions.map((interaction) => (
+                  <li key={interaction.id}>
+                    <div className="split">
+                      <div>
+                        <strong>{interaction.title}</strong>
+                        <div className="muted">
+                          {interaction.summary || "Captured source waiting for extraction or review."}
+                        </div>
+                      </div>
+                      <div className="meta-row">
+                        {interaction.queueName ? <span className="badge badge-neutral">{interaction.queueName}</span> : null}
+                        {interaction.sourceLabel ? <span className="badge badge-neutral">{interaction.sourceLabel}</span> : null}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-note">No communication dumps captured yet.</p>
+            )}
+          </section>
+
           <section className="card">
             <h2>Active projects</h2>
             {data.activeProjects.length ? (
@@ -137,6 +183,26 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
 
         <aside className="stack">
           <section className="card">
+            <h2>Approval queues</h2>
+            {data.approvalQueues.length ? (
+              <ul className="list">
+                {data.approvalQueues.map((queue) => (
+                  <li key={queue.id}>
+                    <div className="split">
+                      <strong>{queue.name}</strong>
+                      <span className={queue.pendingCount ? "badge badge-warn" : "badge badge-neutral"}>
+                        {queue.pendingCount} pending
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-note">No approval queues configured yet.</p>
+            )}
+          </section>
+
+          <section className="card">
             <h2>Attention items</h2>
             {data.attentionItems.length ? (
               <ul className="list">
@@ -163,6 +229,24 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
               </ul>
             ) : (
               <p className="empty-note">No meetings captured yet.</p>
+            )}
+          </section>
+
+          <section className="card">
+            <h2>Compiled memory</h2>
+            {data.compiledPages.length ? (
+              <ul className="list">
+                {data.compiledPages.map((page) => (
+                  <li key={page.id}>
+                    <Link href={`/${route.tenantSlug}/${route.workspaceSlug}/knowledge/${page.slug}`}>
+                      <strong>{page.title}</strong>
+                    </Link>
+                    <div className="muted">{page.summary || "Ready for approved source-backed updates."}</div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-note">No compiled pages seeded yet.</p>
             )}
           </section>
         </aside>

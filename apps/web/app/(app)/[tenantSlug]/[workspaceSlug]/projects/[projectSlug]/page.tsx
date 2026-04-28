@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getProjectOverview } from "@workspace-kit/projects";
 
@@ -28,7 +29,7 @@ export default async function ProjectWorkspacePage({ params }: PageProps) {
   const route = await params;
 
   if (!session?.activeTenantId) {
-    throw new Error("Unauthorized");
+    redirect("/signin");
   }
 
   const data = await getProjectOverview({

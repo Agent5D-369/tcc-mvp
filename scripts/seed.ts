@@ -264,12 +264,316 @@ async function main() {
     });
   }
 
+  await db
+    .update(schema.memberships)
+    .set({ isDefaultWorkspace: false })
+    .where(and(
+      eq(schema.memberships.tenantId, tenant.id),
+      eq(schema.memberships.userId, user.id),
+    ));
+
+  let [amoraWorkspace] = await db
+    .select()
+    .from(schema.workspaces)
+    .where(and(
+      eq(schema.workspaces.tenantId, tenant.id),
+      eq(schema.workspaces.slug, "amora-command"),
+    ))
+    .limit(1);
+
+  if (!amoraWorkspace) {
+    [amoraWorkspace] = await db.insert(schema.workspaces).values({
+      tenantId: tenant.id,
+      name: "Amora Command Center",
+      slug: "amora-command",
+      description: "Pilot workspace for turning meeting, email, voice, and chat dumps into approved tasks, decisions, and source-backed memory.",
+      visibility: "private",
+      createdBy: user.id,
+    }).returning();
+  }
+
+  await db.insert(schema.memberships).values({
+    tenantId: tenant.id,
+    workspaceId: amoraWorkspace.id,
+    userId: user.id,
+    role: "owner",
+    isDefaultWorkspace: true,
+  }).onConflictDoUpdate({
+    target: [
+      schema.memberships.tenantId,
+      schema.memberships.workspaceId,
+      schema.memberships.userId,
+    ],
+    set: { isDefaultWorkspace: true, role: "owner" },
+  });
+
+  let [amoraProject] = await db
+    .select()
+    .from(schema.projects)
+    .where(and(
+      eq(schema.projects.workspaceId, amoraWorkspace.id),
+      eq(schema.projects.slug, "pilot-operating-brain"),
+    ))
+    .limit(1);
+
+  if (!amoraProject) {
+    [amoraProject] = await db.insert(schema.projects).values({
+      tenantId: tenant.id,
+      workspaceId: amoraWorkspace.id,
+      name: "Amora Pilot Operating Brain",
+      slug: "pilot-operating-brain",
+      summary: "A narrow pilot for capturing raw communication, extracting next steps, approving changes, and maintaining a living project brain.",
+      status: "active",
+      health: "yellow",
+      ownerId: user.id,
+      metadataJson: {
+        pilot: "amora",
+        scope: "capture-approval-memory",
+      },
+    }).returning();
+  }
+
+  for (const status of statuses) {
+    await db.insert(schema.taskStatuses).values({
+      tenantId: tenant.id,
+      workspaceId: amoraWorkspace.id,
+      ...status,
+      color: null,
+    }).onConflictDoNothing();
+  }
+
+  const queueSeeds = [
+    {
+      name: "Leadership",
+      slug: "leadership",
+      description: "Founder priorities, strategic decisions, alignment gaps, and unresolved leadership questions.",
+      sortOrder: 0,
+    },
+    {
+      name: "Hiring / Team",
+      slug: "hiring-team",
+      description: "Role clarity, hiring needs, team ownership, onboarding, and capacity questions.",
+      sortOrder: 1,
+    },
+    {
+      name: "Ops",
+      slug: "ops",
+      description: "Operating follow-up, SOPs, admin details, and routine execution work.",
+      sortOrder: 2,
+    },
+  ] as const;
+
+  for (const queue of queueSeeds) {
+    await db.insert(schema.queues).values({
+      tenantId: tenant.id,
+      workspaceId: amoraWorkspace.id,
+      ...queue,
+      metadataJson: { pilot: "amora" },
+    }).onConflictDoNothing();
+  }
+
+  const amoraQueues = await db
+    .select()
+    .from(schema.queues)
+    .where(eq(schema.queues.workspaceId, amoraWorkspace.id));
+
+  const queueBySlug = Object.fromEntries(amoraQueues.map((queue) => [queue.slug, queue]));
+
+  const captureTitle = "Founder ops and hiring dump";
+  let [amoraInteraction] = await db
+    .select()
+    .from(schema.interactions)
+    .where(and(
+      eq(schema.interactions.workspaceId, amoraWorkspace.id),
+      eq(schema.interactions.title, captureTitle),
+    ))
+    .limit(1);
+
+  if (!amoraInteraction) {
+    [amoraInteraction] = await db.insert(schema.interactions).values({
+      tenantId: tenant.id,
+      workspaceId: amoraWorkspace.id,
+      projectId: amoraProject.id,
+      queueId: queueBySlug.ops?.id ?? null,
+      title: captureTitle,
+      sourceType: "manual",
+      sourceLabel: "voice-to-text note",
+      occurredAt: new Date(),
+      summary: "Captured a messy founder update about hiring pressure, unclear ownership, and the need to turn meeting follow-up into visible tasks.",
+      rawContent: "We need to stop losing action items after calls. Hiring is moving but roles are fuzzy. Ops follow-up keeps living in memory and messages. We need one place to approve next steps and keep decisions visible.",
+      artifactId: null,
+      capturedBy: user.id,
+      metadataJson: {
+        pilot: "amora",
+        intakeType: "voice_note",
+      },
+    }).returning();
+  }
+
+  const proposalSeeds = [
+    {
+      targetType: "task",
+      title: "Define owner for each active hiring lane",
+      bodyMarkdown: "Create a visible task to assign owners for current hiring lanes and identify gaps.",
+      queueId: queueBySlug["hiring-team"]?.id ?? null,
+      sourceExcerpt: "Hiring is moving but roles are fuzzy.",
+      proposedPatchJson: {
+        title: "Define owner for each active hiring lane",
+        priority: "high",
+        status: "todo",
+      },
+    },
+    {
+      targetType: "decision",
+      title: "Use approval-first capture before automating writes",
+      bodyMarkdown: "Record that Amora pilot output must be reviewed before becoming tasks, decisions, or memory.",
+      queueId: queueBySlug.leadership?.id ?? null,
+      sourceExcerpt: "We need one place to approve next steps and keep decisions visible.",
+      proposedPatchJson: {
+        decisionText: "Amora Command Center Lite will use approval-first capture for meeting, email, voice, and copied chat dumps.",
+        status: "accepted",
+      },
+    },
+    {
+      targetType: "compiled_page",
+      title: "Update Ops SOPs with capture habit",
+      bodyMarkdown: "Add a lightweight SOP: dump meeting notes and voice updates into TCC after important conversations.",
+      queueId: queueBySlug.ops?.id ?? null,
+      sourceExcerpt: "We need to stop losing action items after calls.",
+      proposedPatchJson: {
+        pageSlug: "ops-sops",
+        changeSummary: "Add capture-after-call habit to Ops SOPs.",
+      },
+    },
+  ] as const;
+
+  for (const proposal of proposalSeeds) {
+    const existing = await db
+      .select({ id: schema.proposals.id })
+      .from(schema.proposals)
+      .where(and(
+        eq(schema.proposals.workspaceId, amoraWorkspace.id),
+        eq(schema.proposals.title, proposal.title),
+      ))
+      .limit(1);
+
+    if (!existing.length) {
+      await db.insert(schema.proposals).values({
+        tenantId: tenant.id,
+        workspaceId: amoraWorkspace.id,
+        projectId: amoraProject.id,
+        interactionId: amoraInteraction.id,
+        status: "pending",
+        confidenceBps: 7800,
+        proposedBy: user.id,
+        reviewedBy: null,
+        reviewedAt: null,
+        ...proposal,
+      });
+    }
+  }
+
+  const compiledPageSeeds = [
+    {
+      slug: "project-overview",
+      title: "Project Overview",
+      pageType: "overview",
+      summary: "The pilot turns messy communication into approved tasks, decisions, questions, and memory.",
+      content: "# Project Overview\n\nAmora Command Center Lite is a narrow pilot for capture, approval, and continuity.\n",
+    },
+    {
+      slug: "current-roles",
+      title: "Current Roles",
+      pageType: "roles",
+      summary: "Role clarity belongs here as hiring and ownership details become explicit.",
+      content: "# Current Roles\n\nUse approved source-backed updates to keep role ownership current.\n",
+    },
+    {
+      slug: "open-questions",
+      title: "Open Questions",
+      pageType: "questions",
+      summary: "Unresolved questions extracted from meetings, email, voice notes, and copied chat summaries.",
+      content: "# Open Questions\n\n- Which hiring lanes need a named owner this week?\n",
+    },
+    {
+      slug: "decisions",
+      title: "Decisions",
+      pageType: "decisions",
+      summary: "Accepted decisions with source context so the team avoids relitigating settled calls.",
+      content: "# Decisions\n\nAccepted decisions should be linked back to the source interaction that produced them.\n",
+    },
+    {
+      slug: "hiring-needs",
+      title: "Hiring Needs",
+      pageType: "hiring",
+      summary: "Hiring gaps, role needs, and ownership questions surfaced by the pilot.",
+      content: "# Hiring Needs\n\nUse approved proposals to keep hiring needs current.\n",
+    },
+    {
+      slug: "ops-sops",
+      title: "Ops SOPs",
+      pageType: "sop",
+      summary: "Small operating habits that reduce founder memory burden and loose follow-up.",
+      content: "# Ops SOPs\n\n- After important conversations, dump notes into the Capture Hub for extraction and approval.\n",
+    },
+  ] as const;
+
+  for (const pageSeed of compiledPageSeeds) {
+    let [compiledPage] = await db
+      .select()
+      .from(schema.compiledPages)
+      .where(and(
+        eq(schema.compiledPages.workspaceId, amoraWorkspace.id),
+        eq(schema.compiledPages.slug, pageSeed.slug),
+      ))
+      .limit(1);
+
+    if (!compiledPage) {
+      [compiledPage] = await db.insert(schema.compiledPages).values({
+        tenantId: tenant.id,
+        workspaceId: amoraWorkspace.id,
+        projectId: amoraProject.id,
+        slug: pageSeed.slug,
+        title: pageSeed.title,
+        pageType: pageSeed.pageType,
+        status: "active",
+        summary: pageSeed.summary,
+        sourceConfidenceBps: 7000,
+        humanOwnerId: user.id,
+        metadataJson: { pilot: "amora" },
+      }).returning();
+    }
+
+    const existingRevision = await db
+      .select({ id: schema.compiledPageRevisions.id })
+      .from(schema.compiledPageRevisions)
+      .where(and(
+        eq(schema.compiledPageRevisions.pageId, compiledPage.id),
+        eq(schema.compiledPageRevisions.revisionNumber, 1),
+      ))
+      .limit(1);
+
+    if (!existingRevision.length) {
+      await db.insert(schema.compiledPageRevisions).values({
+        tenantId: tenant.id,
+        pageId: compiledPage.id,
+        interactionId: amoraInteraction.id,
+        revisionNumber: 1,
+        contentMarkdown: pageSeed.content,
+        changeSummary: "Initial Amora pilot page shell.",
+        reviewStatus: "approved",
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+      });
+    }
+  }
+
   console.log({
     userId: user.id,
     tenantId: tenant.id,
-    workspaceId: workspace.id,
-    projectId: project.id,
-    route: `/${tenant.slug}/${workspace.slug}`,
+    workspaceId: amoraWorkspace.id,
+    projectId: amoraProject.id,
+    route: `/${tenant.slug}/${amoraWorkspace.slug}`,
   });
 }
 

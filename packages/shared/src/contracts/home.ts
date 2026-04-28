@@ -15,6 +15,8 @@ export type HomePayload = {
     openTasks: number;
     overdueTasks: number;
     decisionsLogged: number;
+    pendingApprovals: number;
+    capturedInteractions: number;
   };
   activeProjects: Array<{
     id: string;
@@ -37,6 +39,27 @@ export type HomePayload = {
     meetingAt: string | null;
     summary: string | null;
     projectName: string | null;
+  }>;
+  recentInteractions: Array<{
+    id: string;
+    title: string;
+    sourceLabel: string | null;
+    summary: string | null;
+    queueName: string | null;
+    createdAt: string;
+  }>;
+  approvalQueues: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    pendingCount: number;
+  }>;
+  compiledPages: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    summary: string | null;
+    updatedAt: string;
   }>;
   attentionItems: string[];
   commandBrief: {
