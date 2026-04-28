@@ -104,32 +104,6 @@ export async function getWorkspaceHome(args: {
     .orderBy(desc(schema.projects.updatedAt))
     .limit(8);
 
-  const openTasks = await db
-    .select({
-      id: schema.tasks.id,
-      title: schema.tasks.title,
-      priority: schema.tasks.priority,
-      dueAt: schema.tasks.dueAt,
-      updatedAt: schema.tasks.updatedAt,
-      statusName: schema.taskStatuses.name,
-      statusKind: schema.taskStatuses.kind,
-      projectName: schema.projects.name,
-      projectSlug: schema.projects.slug,
-    })
-    .from(schema.tasks)
-    .innerJoin(schema.projects, eq(schema.projects.id, schema.tasks.projectId))
-    .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
-    .where(and(
-      eq(schema.tasks.tenantId, tenantId),
-      eq(schema.tasks.workspaceId, workspace.id),
-      sql`
-        ${schema.taskStatuses.kind} is null
-        or ${schema.taskStatuses.kind} in ('todo', 'in_progress', 'blocked')
-      `,
-    ))
-    .orderBy(desc(schema.tasks.updatedAt))
-    .limit(6);
-
   const [proposalMetrics] = await db
     .select({ value: count() })
     .from(schema.proposals)
@@ -279,16 +253,6 @@ export async function getWorkspaceHome(args: {
     activeProjects: activeProjects.map((project) => ({
       ...project,
       openTaskCount: Number(project.openTaskCount || 0),
-    })),
-    openTasks: openTasks.map((task) => ({
-      id: task.id,
-      title: task.title,
-      priority: task.priority,
-      dueAt: task.dueAt ? task.dueAt.toISOString() : null,
-      statusName: task.statusName,
-      statusKind: task.statusKind,
-      projectName: task.projectName,
-      projectSlug: task.projectSlug,
     })),
     recentDecisions: recentDecisions.map((decision) => ({
       ...decision,

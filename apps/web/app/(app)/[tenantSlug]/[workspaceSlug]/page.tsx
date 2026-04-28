@@ -162,37 +162,6 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           </section>
 
           <section className="card">
-            <h2>Open tasks</h2>
-            {data.openTasks.length ? (
-              <ul className="list">
-                {data.openTasks.map((task) => (
-                  <li key={task.id}>
-                    <div className="split">
-                      <div>
-                        <Link href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${task.projectSlug}`}>
-                          <strong>{task.title}</strong>
-                        </Link>
-                        <div className="muted">
-                          {task.projectName}
-                          {task.dueAt ? ` - due ${new Date(task.dueAt).toLocaleDateString()}` : ""}
-                        </div>
-                      </div>
-                      <div className="meta-row">
-                        <span className="badge badge-neutral">{task.statusName || task.statusKind || "open"}</span>
-                        <span className={task.priority === "urgent" || task.priority === "high" ? "badge badge-warn" : "badge badge-neutral"}>
-                          {task.priority}
-                        </span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="empty-note">No open tasks yet. Approved task proposals will land here.</p>
-            )}
-          </section>
-
-          <section className="card">
             <h2>Recent decisions</h2>
             {data.recentDecisions.length ? (
               <ul className="list">
