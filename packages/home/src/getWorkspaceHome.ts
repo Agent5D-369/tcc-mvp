@@ -100,7 +100,14 @@ export async function getWorkspaceHome(args: {
       eq(schema.projects.tenantId, tenantId),
       eq(schema.projects.workspaceId, workspace.id),
     ))
-    .groupBy(schema.projects.id)
+    .groupBy(
+      schema.projects.id,
+      schema.projects.name,
+      schema.projects.slug,
+      schema.projects.status,
+      schema.projects.health,
+      schema.projects.updatedAt,
+    )
     .orderBy(desc(schema.projects.updatedAt))
     .limit(8);
 
@@ -191,7 +198,12 @@ export async function getWorkspaceHome(args: {
       eq(schema.queues.tenantId, tenantId),
       eq(schema.queues.workspaceId, workspace.id),
     ))
-    .groupBy(schema.queues.id)
+    .groupBy(
+      schema.queues.id,
+      schema.queues.name,
+      schema.queues.slug,
+      schema.queues.sortOrder,
+    )
     .orderBy(schema.queues.sortOrder);
 
   const compiledPages = await db

@@ -57,10 +57,10 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
 
         <section className="hero compact-hero">
           <div>
-            <div className="kicker">Workspace recovery</div>
-            <h1>This workspace is available, but the dashboard brief needs attention.</h1>
+            <div className="kicker">Workspace tools</div>
+            <h1>The workspace tools are available.</h1>
             <p>
-              Continue the pilot workspace through the direct workflow pages while the command brief catches up.
+              Continue through the direct workflow pages while the command brief catches up.
             </p>
             <div className="hero-actions">
               <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/capture`}>
@@ -76,9 +76,9 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           </div>
 
           <div className="card">
-            <h2>Safe mode</h2>
+            <h2>Command brief</h2>
             <p className="muted">
-              TCC avoided a hard application error on this workspace route and kept the pilot workflow reachable.
+              TCC kept the core workspace workflow reachable while the dashboard brief reloads.
             </p>
           </div>
         </section>

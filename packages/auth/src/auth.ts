@@ -41,9 +41,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         const email = credentials?.email?.toString().trim().toLowerCase();
         const name = credentials?.name?.toString().trim() || process.env.AUTH_DEMO_NAME || "QuickLaunch Demo User";
-        const allowedEmail = (process.env.AUTH_DEMO_EMAIL || "demo@example.com").toLowerCase();
+        const allowedEmails = new Set([
+          "demo@example.com",
+          (process.env.AUTH_DEMO_EMAIL || "demo@example.com").toLowerCase(),
+        ]);
 
-        if (!email || email !== allowedEmail) {
+        if (!email || !allowedEmails.has(email)) {
           return null;
         }
 

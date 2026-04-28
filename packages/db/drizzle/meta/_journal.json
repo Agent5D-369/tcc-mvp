@@ -15,6 +15,13 @@
       "when": 1777384800000,
       "tag": "0001_generic_pilot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777388400000,
+      "tag": "0002_shareable_demo",
+      "breakpoints": true
     }
   ]
 }

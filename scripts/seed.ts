@@ -272,21 +272,21 @@ async function main() {
       eq(schema.memberships.userId, user.id),
     ));
 
-  let [pilotWorkspace] = await db
+  let [demoWorkspace] = await db
     .select()
     .from(schema.workspaces)
     .where(and(
       eq(schema.workspaces.tenantId, tenant.id),
-      eq(schema.workspaces.slug, "pilot-command"),
+      eq(schema.workspaces.slug, "demo-command"),
     ))
     .limit(1);
 
-  if (!pilotWorkspace) {
-    [pilotWorkspace] = await db.insert(schema.workspaces).values({
+  if (!demoWorkspace) {
+    [demoWorkspace] = await db.insert(schema.workspaces).values({
       tenantId: tenant.id,
-      name: "Pilot Command Center",
-      slug: "pilot-command",
-      description: "Pilot workspace for turning meeting, email, voice, and chat dumps into approved tasks, decisions, and source-backed memory.",
+      name: "Demo Command Center",
+      slug: "demo-command",
+      description: "Demo workspace for turning meeting, email, voice, and chat dumps into approved tasks, decisions, and source-backed memory.",
       visibility: "private",
       createdBy: user.id,
     }).returning();
@@ -294,7 +294,7 @@ async function main() {
 
   await db.insert(schema.memberships).values({
     tenantId: tenant.id,
-    workspaceId: pilotWorkspace.id,
+    workspaceId: demoWorkspace.id,
     userId: user.id,
     role: "owner",
     isDefaultWorkspace: true,
@@ -307,27 +307,27 @@ async function main() {
     set: { isDefaultWorkspace: true, role: "owner" },
   });
 
-  let [pilotProject] = await db
+  let [demoProject] = await db
     .select()
     .from(schema.projects)
     .where(and(
-      eq(schema.projects.workspaceId, pilotWorkspace.id),
-      eq(schema.projects.slug, "pilot-operating-brain"),
+      eq(schema.projects.workspaceId, demoWorkspace.id),
+      eq(schema.projects.slug, "demo-operating-brain"),
     ))
     .limit(1);
 
-  if (!pilotProject) {
-    [pilotProject] = await db.insert(schema.projects).values({
+  if (!demoProject) {
+    [demoProject] = await db.insert(schema.projects).values({
       tenantId: tenant.id,
-      workspaceId: pilotWorkspace.id,
-      name: "Pilot Operating Brain",
-      slug: "pilot-operating-brain",
-      summary: "A narrow pilot for capturing raw communication, extracting next steps, approving changes, and maintaining a living project brain.",
+      workspaceId: demoWorkspace.id,
+      name: "Demo Operating Brain",
+      slug: "demo-operating-brain",
+      summary: "A demo workflow for capturing raw communication, extracting next steps, approving changes, and maintaining a living project brain.",
       status: "active",
       health: "yellow",
       ownerId: user.id,
       metadataJson: {
-        pilot: "generic",
+        demo: true,
         scope: "capture-approval-memory",
       },
     }).returning();
@@ -336,7 +336,7 @@ async function main() {
   for (const status of statuses) {
     await db.insert(schema.taskStatuses).values({
       tenantId: tenant.id,
-      workspaceId: pilotWorkspace.id,
+      workspaceId: demoWorkspace.id,
       ...status,
       color: null,
     }).onConflictDoNothing();
@@ -366,34 +366,34 @@ async function main() {
   for (const queue of queueSeeds) {
     await db.insert(schema.queues).values({
       tenantId: tenant.id,
-      workspaceId: pilotWorkspace.id,
+      workspaceId: demoWorkspace.id,
       ...queue,
-      metadataJson: { pilot: "generic" },
+      metadataJson: { demo: true },
     }).onConflictDoNothing();
   }
 
-  const pilotQueues = await db
+  const demoQueues = await db
     .select()
     .from(schema.queues)
-    .where(eq(schema.queues.workspaceId, pilotWorkspace.id));
+    .where(eq(schema.queues.workspaceId, demoWorkspace.id));
 
-  const queueBySlug = Object.fromEntries(pilotQueues.map((queue) => [queue.slug, queue]));
+  const queueBySlug = Object.fromEntries(demoQueues.map((queue) => [queue.slug, queue]));
 
   const captureTitle = "Founder ops and hiring dump";
-  let [pilotInteraction] = await db
+  let [demoInteraction] = await db
     .select()
     .from(schema.interactions)
     .where(and(
-      eq(schema.interactions.workspaceId, pilotWorkspace.id),
+      eq(schema.interactions.workspaceId, demoWorkspace.id),
       eq(schema.interactions.title, captureTitle),
     ))
     .limit(1);
 
-  if (!pilotInteraction) {
-    [pilotInteraction] = await db.insert(schema.interactions).values({
+  if (!demoInteraction) {
+    [demoInteraction] = await db.insert(schema.interactions).values({
       tenantId: tenant.id,
-      workspaceId: pilotWorkspace.id,
-      projectId: pilotProject.id,
+      workspaceId: demoWorkspace.id,
+      projectId: demoProject.id,
       queueId: queueBySlug.ops?.id ?? null,
       title: captureTitle,
       sourceType: "manual",
@@ -404,7 +404,7 @@ async function main() {
       artifactId: null,
       capturedBy: user.id,
       metadataJson: {
-        pilot: "generic",
+        demo: true,
         intakeType: "voice_note",
       },
     }).returning();
@@ -426,11 +426,11 @@ async function main() {
     {
       targetType: "decision",
       title: "Use approval-first capture before automating writes",
-      bodyMarkdown: "Record that pilot workspace output must be reviewed before becoming tasks, decisions, or memory.",
+      bodyMarkdown: "Record that demo workspace output must be reviewed before becoming tasks, decisions, or memory.",
       queueId: queueBySlug.leadership?.id ?? null,
       sourceExcerpt: "We need one place to approve next steps and keep decisions visible.",
       proposedPatchJson: {
-        decisionText: "Pilot Command Center will use approval-first capture for meeting, email, voice, and copied chat dumps.",
+        decisionText: "Demo Command Center will use approval-first capture for meeting, email, voice, and copied chat dumps.",
         status: "accepted",
       },
     },
@@ -452,7 +452,7 @@ async function main() {
       .select({ id: schema.proposals.id })
       .from(schema.proposals)
       .where(and(
-        eq(schema.proposals.workspaceId, pilotWorkspace.id),
+        eq(schema.proposals.workspaceId, demoWorkspace.id),
         eq(schema.proposals.title, proposal.title),
       ))
       .limit(1);
@@ -460,9 +460,9 @@ async function main() {
     if (!existing.length) {
       await db.insert(schema.proposals).values({
         tenantId: tenant.id,
-        workspaceId: pilotWorkspace.id,
-        projectId: pilotProject.id,
-        interactionId: pilotInteraction.id,
+        workspaceId: demoWorkspace.id,
+        projectId: demoProject.id,
+        interactionId: demoInteraction.id,
         status: "pending",
         confidenceBps: 7800,
         proposedBy: user.id,
@@ -478,8 +478,8 @@ async function main() {
       slug: "project-overview",
       title: "Project Overview",
       pageType: "overview",
-      summary: "The pilot turns messy communication into approved tasks, decisions, questions, and memory.",
-      content: "# Project Overview\n\nPilot Command Center is a narrow pilot for capture, approval, and continuity.\n",
+      summary: "The demo workspace turns messy communication into approved tasks, decisions, questions, and memory.",
+      content: "# Project Overview\n\nDemo Command Center is a demo workflow for capture, approval, and continuity.\n",
     },
     {
       slug: "current-roles",
@@ -506,7 +506,7 @@ async function main() {
       slug: "hiring-needs",
       title: "Hiring Needs",
       pageType: "hiring",
-      summary: "Hiring gaps, role needs, and ownership questions surfaced by the pilot.",
+      summary: "Hiring gaps, role needs, and ownership questions surfaced by the demo workspace.",
       content: "# Hiring Needs\n\nUse approved proposals to keep hiring needs current.\n",
     },
     {
@@ -523,7 +523,7 @@ async function main() {
       .select()
       .from(schema.compiledPages)
       .where(and(
-        eq(schema.compiledPages.workspaceId, pilotWorkspace.id),
+        eq(schema.compiledPages.workspaceId, demoWorkspace.id),
         eq(schema.compiledPages.slug, pageSeed.slug),
       ))
       .limit(1);
@@ -531,8 +531,8 @@ async function main() {
     if (!compiledPage) {
       [compiledPage] = await db.insert(schema.compiledPages).values({
         tenantId: tenant.id,
-        workspaceId: pilotWorkspace.id,
-        projectId: pilotProject.id,
+        workspaceId: demoWorkspace.id,
+        projectId: demoProject.id,
         slug: pageSeed.slug,
         title: pageSeed.title,
         pageType: pageSeed.pageType,
@@ -540,7 +540,7 @@ async function main() {
         summary: pageSeed.summary,
         sourceConfidenceBps: 7000,
         humanOwnerId: user.id,
-        metadataJson: { pilot: "generic" },
+        metadataJson: { demo: true },
       }).returning();
     }
 
@@ -557,10 +557,10 @@ async function main() {
       await db.insert(schema.compiledPageRevisions).values({
         tenantId: tenant.id,
         pageId: compiledPage.id,
-        interactionId: pilotInteraction.id,
+        interactionId: demoInteraction.id,
         revisionNumber: 1,
         contentMarkdown: pageSeed.content,
-        changeSummary: "Initial pilot workspace page shell.",
+        changeSummary: "Initial demo workspace page shell.",
         reviewStatus: "approved",
         reviewedBy: user.id,
         reviewedAt: new Date(),
@@ -571,9 +571,9 @@ async function main() {
   console.log({
     userId: user.id,
     tenantId: tenant.id,
-    workspaceId: pilotWorkspace.id,
-    projectId: pilotProject.id,
-    route: `/${tenant.slug}/${pilotWorkspace.slug}`,
+    workspaceId: demoWorkspace.id,
+    projectId: demoProject.id,
+    route: `/${tenant.slug}/${demoWorkspace.slug}`,
   });
 }
 
