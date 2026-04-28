@@ -3,6 +3,12 @@ import { db, schema } from "@workspace-kit/db";
 
 type ProposalPatch = Record<string, unknown>;
 
+type ProposalEdits = {
+  title?: string;
+  bodyMarkdown?: string | null;
+  sourceExcerpt?: string | null;
+};
+
 function stringFromPatch(patch: ProposalPatch, key: string) {
   const value = patch[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -110,6 +116,7 @@ export async function approveProposal(args: {
   workspaceId: string;
   userId: string;
   proposalId: string;
+  edits?: ProposalEdits;
 }) {
   const [proposal] = await db
     .select()
@@ -126,10 +133,37 @@ export async function approveProposal(args: {
     throw new Error("Pending proposal not found");
   }
 
-  const patch = proposal.proposedPatchJson ?? {};
+  const editedTitle = args.edits?.title?.trim();
+  const draft = {
+    ...proposal,
+    title: editedTitle || proposal.title,
+    bodyMarkdown: args.edits && "bodyMarkdown" in args.edits
+      ? args.edits.bodyMarkdown
+      : proposal.bodyMarkdown,
+    sourceExcerpt: args.edits && "sourceExcerpt" in args.edits
+      ? args.edits.sourceExcerpt
+      : proposal.sourceExcerpt,
+  };
+
+  if (args.edits) {
+    await db
+      .update(schema.proposals)
+      .set({
+        title: draft.title,
+        bodyMarkdown: draft.bodyMarkdown,
+        sourceExcerpt: draft.sourceExcerpt,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.proposals.id, proposal.id));
+  }
+
+  const patch = {
+    ...(proposal.proposedPatchJson ?? {}),
+    title: draft.title,
+  };
   let appliedEntityId: string | null = null;
 
-  if (proposal.targetType === "task") {
+  if (draft.targetType === "task") {
     const [defaultStatus] = await db
       .select({ id: schema.taskStatuses.id })
       .from(schema.taskStatuses)
@@ -139,48 +173,48 @@ export async function approveProposal(args: {
       ))
       .limit(1);
 
-    if (!proposal.projectId) {
+    if (!draft.projectId) {
       throw new Error("Task proposals require a project");
     }
 
     const [task] = await db.insert(schema.tasks).values({
       tenantId: args.tenantId,
       workspaceId: args.workspaceId,
-      projectId: proposal.projectId,
+      projectId: draft.projectId,
       statusId: defaultStatus?.id ?? null,
-      title: stringFromPatch(patch, "title") || proposal.title,
-      description: proposal.bodyMarkdown,
+      title: stringFromPatch(patch, "title") || draft.title,
+      description: draft.bodyMarkdown,
       priority: priorityFromPatch(patch),
       assigneeId: null,
       reporterId: args.userId,
       dueAt: null,
       sourceType: "agent",
-      sourceId: proposal.interactionId,
+      sourceId: draft.interactionId,
       rank: null,
       metadataJson: {
-        proposalId: proposal.id,
+        proposalId: draft.id,
         approvalInbox: true,
       },
     }).returning({ id: schema.tasks.id });
 
     appliedEntityId = task.id;
-  } else if (proposal.targetType === "decision") {
+  } else if (draft.targetType === "decision") {
     const [decision] = await db.insert(schema.decisionLog).values({
       tenantId: args.tenantId,
       workspaceId: args.workspaceId,
-      projectId: proposal.projectId,
-      title: proposal.title,
-      context: proposal.bodyMarkdown,
-      decisionText: stringFromPatch(patch, "decisionText") || proposal.bodyMarkdown || proposal.title,
+      projectId: draft.projectId,
+      title: draft.title,
+      context: draft.bodyMarkdown,
+      decisionText: stringFromPatch(patch, "decisionText") || draft.bodyMarkdown || draft.title,
       status: "accepted",
       decidedBy: args.userId,
       decidedAt: new Date(),
       sourceType: "agent",
-      sourceId: proposal.interactionId,
+      sourceId: draft.interactionId,
     }).returning({ id: schema.decisionLog.id });
 
     appliedEntityId = decision.id;
-  } else if (proposal.targetType === "compiled_page") {
+  } else if (draft.targetType === "compiled_page") {
     const pageSlug = stringFromPatch(patch, "pageSlug") || "project-overview";
     const [page] = await db
       .select({ id: schema.compiledPages.id })
@@ -203,19 +237,19 @@ export async function approveProposal(args: {
       .where(eq(schema.compiledPageRevisions.pageId, page.id));
 
     const content = [
-      `## ${proposal.title}`,
+      `## ${draft.title}`,
       "",
-      proposal.bodyMarkdown || "",
-      proposal.sourceExcerpt ? `\nSource excerpt:\n${proposal.sourceExcerpt}` : "",
+      draft.bodyMarkdown || "",
+      draft.sourceExcerpt ? `\nSource excerpt:\n${draft.sourceExcerpt}` : "",
     ].join("\n").trim();
 
     const [revision] = await db.insert(schema.compiledPageRevisions).values({
       tenantId: args.tenantId,
       pageId: page.id,
-      interactionId: proposal.interactionId,
+      interactionId: draft.interactionId,
       revisionNumber: revisionSummary?.nextRevision ?? 1,
       contentMarkdown: content,
-      changeSummary: stringFromPatch(patch, "changeSummary") || proposal.title,
+      changeSummary: stringFromPatch(patch, "changeSummary") || draft.title,
       reviewStatus: "approved",
       reviewedBy: args.userId,
       reviewedAt: new Date(),
@@ -226,20 +260,20 @@ export async function approveProposal(args: {
     const [memory] = await db.insert(schema.memoryItems).values({
       tenantId: args.tenantId,
       workspaceId: args.workspaceId,
-      projectId: proposal.projectId,
-      scope: proposal.projectId ? "project" : "workspace",
-      kind: proposal.targetType === "open_question" ? "constraint" : "fact",
-      key: proposal.title,
+      projectId: draft.projectId,
+      scope: draft.projectId ? "project" : "workspace",
+      kind: draft.targetType === "open_question" ? "constraint" : "fact",
+      key: draft.title,
       valueJson: {
-        body: proposal.bodyMarkdown,
-        sourceExcerpt: proposal.sourceExcerpt,
-        targetType: proposal.targetType,
+        body: draft.bodyMarkdown,
+        sourceExcerpt: draft.sourceExcerpt,
+        targetType: draft.targetType,
       },
-      confidenceBps: proposal.confidenceBps,
+      confidenceBps: draft.confidenceBps,
       reviewStatus: "approved",
       sourceType: "agent",
-      sourceId: proposal.interactionId,
-      proposedBy: proposal.proposedBy,
+      sourceId: draft.interactionId,
+      proposedBy: draft.proposedBy,
       reviewedBy: args.userId,
       lastConfirmedAt: new Date(),
     }).returning({ id: schema.memoryItems.id });

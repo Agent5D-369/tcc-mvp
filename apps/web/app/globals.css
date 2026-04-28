@@ -229,6 +229,41 @@ textarea {
   font-size: 1.2rem;
 }
 
+.approval-edit-form {
+  display: grid;
+  gap: 12px;
+}
+
+.approval-edit-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.approval-edit-form label span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.approval-edit-form input,
+.approval-edit-form textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  padding: 12px 13px;
+  outline: none;
+}
+
+.approval-edit-form textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
 .capture-form {
   display: grid;
   gap: 18px;

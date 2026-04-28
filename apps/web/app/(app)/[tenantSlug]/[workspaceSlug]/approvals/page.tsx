@@ -29,35 +29,50 @@ type ProposalCardProps = {
 function ProposalCard({ proposal, approveAction, rejectAction }: ProposalCardProps) {
   return (
     <article className="approval-card">
-      <div className="split">
-        <div>
-          <div className="meta-row">
-            <span className="badge badge-neutral">{proposal.targetType.replace(/_/g, " ")}</span>
-            <span className="badge badge-neutral">{Math.round(proposal.confidenceBps / 100)}% confidence</span>
-            {proposal.projectName ? <span className="badge badge-neutral">{proposal.projectName}</span> : null}
-          </div>
-          <h3>{proposal.title}</h3>
+      <div className="meta-row">
+        <span className="badge badge-neutral">{proposal.targetType.replace(/_/g, " ")}</span>
+        <span className="badge badge-neutral">{Math.round(proposal.confidenceBps / 100)}% confidence</span>
+        {proposal.projectName ? <span className="badge badge-neutral">{proposal.projectName}</span> : null}
+      </div>
+
+      <form action={approveAction} className="approval-edit-form">
+        <input name="proposalId" type="hidden" value={proposal.id} />
+        <label>
+          <span>Proposal</span>
+          <input name="title" defaultValue={proposal.title} />
+        </label>
+
+        <label>
+          <span>Draft write</span>
+          <textarea
+            name="bodyMarkdown"
+            defaultValue={proposal.bodyMarkdown || ""}
+            placeholder="What should be written into TCC after approval?"
+          />
+        </label>
+
+        <div className="source-box">
+          <strong>{proposal.interactionTitle || "Captured source"}</strong>
+          <div className="muted">{proposal.sourceLabel || proposal.queueName || "Source evidence"}</div>
+          <label>
+            <span>Evidence excerpt</span>
+            <textarea
+              name="sourceExcerpt"
+              defaultValue={proposal.sourceExcerpt || ""}
+              placeholder="Source-backed evidence for this proposal."
+            />
+          </label>
         </div>
-      </div>
 
-      {proposal.bodyMarkdown ? <p className="muted">{proposal.bodyMarkdown}</p> : null}
+        <div className="form-actions">
+          <button className="button-primary" type="submit">Approve edited</button>
+        </div>
+      </form>
 
-      <div className="source-box">
-        <strong>{proposal.interactionTitle || "Captured source"}</strong>
-        <div className="muted">{proposal.sourceLabel || proposal.queueName || "Source evidence"}</div>
-        {proposal.sourceExcerpt ? <p>{proposal.sourceExcerpt}</p> : null}
-      </div>
-
-      <div className="form-actions">
-        <form action={approveAction}>
-          <input name="proposalId" type="hidden" value={proposal.id} />
-          <button className="button-primary" type="submit">Approve</button>
-        </form>
-        <form action={rejectAction}>
-          <input name="proposalId" type="hidden" value={proposal.id} />
-          <button className="button-secondary" type="submit">Reject</button>
-        </form>
-      </div>
+      <form action={rejectAction}>
+        <input name="proposalId" type="hidden" value={proposal.id} />
+        <button className="button-secondary" type="submit">Reject</button>
+      </form>
     </article>
   );
 }
@@ -107,6 +122,7 @@ export default async function ApprovalsPage({ params, searchParams }: PageProps)
             <li>Approve task proposals into the task list.</li>
             <li>Approve decisions into the decision log.</li>
             <li>Approve memory updates into compiled wiki revisions.</li>
+            <li>Edit the draft before approval when the source is right but the wording needs a human pass.</li>
           </ul>
         </div>
       </section>

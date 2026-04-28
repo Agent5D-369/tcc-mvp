@@ -25,6 +25,11 @@ export async function approveProposalAction(
     workspaceId: session.activeWorkspaceId,
     userId: session.user.id,
     proposalId,
+    edits: {
+      title: formData.get("title")?.toString().trim() || undefined,
+      bodyMarkdown: formData.get("bodyMarkdown")?.toString().trim() || null,
+      sourceExcerpt: formData.get("sourceExcerpt")?.toString().trim() || null,
+    },
   });
 
   revalidatePath(`/${route.tenantSlug}/${route.workspaceSlug}`);
