@@ -16,7 +16,7 @@ export default function SignInPage() {
       email,
       name,
       redirect: false,
-      callbackUrl: "/",
+      callbackUrl: "/quicklaunch-demo/demo-command",
     });
 
     if (result?.error) {
@@ -43,8 +43,8 @@ export default function SignInPage() {
           <div className="kicker">Controlled access</div>
           <h1>Enter the command center.</h1>
           <p>
-            Use Google for normal organization access, or use the demo flow while you seed the first tenant and
-            workspace on local or staging environments.
+            Use Google for normal organization access, or use the demo flow to open the shared Team Command Center
+            workspace.
           </p>
           <div className="hero-actions">
             <button
@@ -59,6 +59,9 @@ export default function SignInPage() {
 
         <div className="card">
           <h2>Demo sign-in</h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Shareable demo access uses <strong>demo@example.com</strong> and opens the demo workspace directly.
+          </p>
           <form onSubmit={onDemoLogin} style={{ display: "grid", gap: 12 }}>
             <input
               value={email}

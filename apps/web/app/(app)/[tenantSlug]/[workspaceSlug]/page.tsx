@@ -57,10 +57,11 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
 
         <section className="hero compact-hero">
           <div>
-            <div className="kicker">Workspace tools</div>
-            <h1>The workspace tools are available.</h1>
+            <div className="kicker">Command Center demo</div>
+            <h1>Turn messy communication into approved operating state.</h1>
             <p>
-              Continue through the direct workflow pages while the command brief catches up.
+              Use the core demo loop: capture a meeting, email, voice note, or copied chat summary; extract proposed
+              tasks, decisions, and memory; then approve what should become shared team context.
             </p>
             <div className="hero-actions">
               <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/capture`}>
@@ -76,10 +77,12 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           </div>
 
           <div className="card">
-            <h2>Command brief</h2>
-            <p className="muted">
-              TCC kept the core workspace workflow reachable while the dashboard brief reloads.
-            </p>
+            <h2>Demo path</h2>
+            <ul className="list">
+              <li>Capture raw communication.</li>
+              <li>Extract source-backed proposals.</li>
+              <li>Approve tasks, decisions, and compiled memory.</li>
+            </ul>
           </div>
         </section>
       </main>
