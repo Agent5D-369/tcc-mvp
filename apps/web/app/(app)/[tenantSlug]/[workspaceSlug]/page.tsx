@@ -31,7 +31,60 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
   const data = await getWorkspaceHome({
     tenantId: session.activeTenantId,
     workspaceSlug: route.workspaceSlug,
+  }).catch((error) => {
+    console.error("Workspace home failed to load", {
+      tenantSlug: route.tenantSlug,
+      workspaceSlug: route.workspaceSlug,
+      activeTenantId: session.activeTenantId,
+      error,
+    });
+
+    return null;
   });
+
+  if (!data) {
+    return (
+      <main className="page-shell">
+        <div className="topbar">
+          <div className="brand-block">
+            <span className="eyebrow">{route.tenantSlug} / {route.workspaceSlug}</span>
+            <strong>QuickLaunch Team Command Center</strong>
+          </div>
+          <Link className="button-secondary" href="/">
+            Switch context
+          </Link>
+        </div>
+
+        <section className="hero compact-hero">
+          <div>
+            <div className="kicker">Workspace recovery</div>
+            <h1>This workspace is available, but the dashboard brief needs attention.</h1>
+            <p>
+              Continue the Amora pilot through the direct workflow pages while the command brief catches up.
+            </p>
+            <div className="hero-actions">
+              <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/capture`}>
+                Capture source
+              </Link>
+              <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/approvals`}>
+                Review approvals
+              </Link>
+              <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/knowledge`}>
+                Open memory
+              </Link>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2>Safe mode</h2>
+            <p className="muted">
+              TCC avoided a hard application error on this workspace route and kept the pilot workflow reachable.
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="page-shell">
