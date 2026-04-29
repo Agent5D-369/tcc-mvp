@@ -52,7 +52,7 @@ export default async function KnowledgePage({ params }: PageProps) {
       </section>
 
       <section className="knowledge-list">
-        {data.pages.map((page) => (
+        {data.pages.length ? data.pages.map((page) => (
           <Link
             className="knowledge-row"
             href={`/${route.tenantSlug}/${route.workspaceSlug}/knowledge/${page.slug}`}
@@ -74,7 +74,12 @@ export default async function KnowledgePage({ params }: PageProps) {
               <span>{page.latestRevision ? `v${page.latestRevision}` : "no revision"}</span>
             </div>
           </Link>
-        ))}
+        )) : (
+          <section className="card">
+            <h2>No compiled pages yet</h2>
+            <p className="empty-note">Capture a source, extract proposals, and approve memory updates to start building the anti-amnesia layer.</p>
+          </section>
+        )}
       </section>
     </main>
   );

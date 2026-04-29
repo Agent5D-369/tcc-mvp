@@ -94,6 +94,11 @@ export default async function ApprovalsPage({ params, searchParams }: PageProps)
   const approveAction = approveProposalAction.bind(null, route);
   const rejectAction = rejectProposalAction.bind(null, route);
   const totalPending = data.queues.reduce((sum, queue) => sum + queue.proposals.length, data.unqueued.length);
+  const proposalsByType = [...data.queues.flatMap((queue) => queue.proposals), ...data.unqueued]
+    .reduce<Record<string, number>>((summary, proposal) => ({
+      ...summary,
+      [proposal.targetType]: (summary[proposal.targetType] ?? 0) + 1,
+    }), {});
 
   return (
     <main className="page-shell">
@@ -140,6 +145,15 @@ export default async function ApprovalsPage({ params, searchParams }: PageProps)
           <span>The proposal has been removed from the pending queue.</span>
         </section>
       ) : null}
+
+      <section className="metric-grid">
+        {["task", "decision", "compiled_page", "memory", "open_question"].map((type) => (
+          <article className="metric-card" key={type}>
+            <div className="metric-label">{type.replace(/_/g, " ")}</div>
+            <div className="metric-value">{proposalsByType[type] ?? 0}</div>
+          </article>
+        ))}
+      </section>
 
       <section className="approval-layout">
         {data.queues.map((queue) => (

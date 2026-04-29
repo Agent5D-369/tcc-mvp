@@ -52,6 +52,34 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
     workspaceSlug: route.workspaceSlug,
   });
   const taskBaseHref = `/${route.tenantSlug}/${route.workspaceSlug}/tasks`;
+  const baseHref = `/${route.tenantSlug}/${route.workspaceSlug}`;
+  const demoSteps = [
+    {
+      label: "Capture source",
+      detail: "Paste notes, email, voice text, or use the seeded sample capture.",
+      href: `${baseHref}/capture`,
+    },
+    {
+      label: "Extract proposals",
+      detail: "Choose a Markdown agent and generate tasks, decisions, and memory proposals.",
+      href: `${baseHref}/capture`,
+    },
+    {
+      label: "Review approvals",
+      detail: "Edit, approve, or reject source-backed proposed writes.",
+      href: `${baseHref}/approvals`,
+    },
+    {
+      label: "Open memory",
+      detail: "See the compiled wiki layer that reduces repeated context setting.",
+      href: `${baseHref}/knowledge`,
+    },
+    {
+      label: "Tune AI",
+      detail: "Review managed/BYO keys, budget, and Markdown agents.",
+      href: `${baseHref}/settings/agents`,
+    },
+  ];
 
   return (
     <main className="page-shell app-page-shell">
@@ -104,6 +132,25 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           <div className="metric-label">Logged decisions</div>
           <div className="metric-value">{data.metrics.decisionsLogged}</div>
         </article>
+      </section>
+
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <div className="kicker">Demo flow</div>
+            <h2 className="section-title">Run the five-minute communications-to-clarity loop</h2>
+          </div>
+          <p className="empty-note">This is the fastest path to show how TCC turns raw communication into approved work, decisions, and memory.</p>
+        </div>
+        <div className="triage-grid">
+          {demoSteps.map((step, index) => (
+            <Link className="triage-card" href={step.href} key={step.label}>
+              <span className="metric-label">Step {index + 1}</span>
+              <strong>{step.label}</strong>
+              <span className="muted">{step.detail}</span>
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="section-block">
