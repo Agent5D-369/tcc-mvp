@@ -738,6 +738,21 @@ textarea {
   min-height: 44px;
 }
 
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.toggle-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
 .capture-panel-body,
 .section-divider {
   border-top: 1px solid rgba(24, 35, 45, 0.08);

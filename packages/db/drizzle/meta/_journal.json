@@ -50,6 +50,13 @@
       "when": 1777485600000,
       "tag": "0006_demo_safety_pass",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777489200000,
+      "tag": "0007_neutral_demo_naming",
+      "breakpoints": true
     }
   ]
 }

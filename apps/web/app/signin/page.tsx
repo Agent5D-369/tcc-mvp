@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("demo@example.com");
-  const [name, setName] = useState("QuickLaunch Demo User");
+  const [name, setName] = useState("Team Command Center Demo User");
   const [error, setError] = useState<string | null>(null);
 
   async function onDemoLogin(e: FormEvent) {

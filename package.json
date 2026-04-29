@@ -10,7 +10,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:retry": "tsx scripts/migrate-with-retry.ts",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "permissions:test": "tsx scripts/permission-smoke-test.ts"
   },
   "engines": {
     "node": "22.x"

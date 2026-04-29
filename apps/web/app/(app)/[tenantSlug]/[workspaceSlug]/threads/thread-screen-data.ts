@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
 
 export async function getWorkspaceThreadsIndex(args: {
@@ -24,6 +24,7 @@ export async function getWorkspaceThreadsIndex(args: {
     .where(and(
       eq(schema.threads.tenantId, args.tenantId),
       eq(schema.threads.workspaceId, args.workspaceId),
+      isNull(schema.threads.archivedAt),
     ))
     .groupBy(schema.threads.id, schema.projects.id, schema.agentDefinitions.id)
     .orderBy(desc(schema.threads.pinned), desc(schema.threads.updatedAt), asc(schema.threads.title));
@@ -57,6 +58,7 @@ export async function getThreadOverview(args: {
       eq(schema.threads.id, args.threadId),
       eq(schema.threads.tenantId, args.tenantId),
       eq(schema.threads.workspaceId, args.workspaceId),
+      isNull(schema.threads.archivedAt),
     ))
     .limit(1);
 

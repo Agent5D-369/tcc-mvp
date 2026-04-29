@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Demo access is limited to demo@example.com" }, { status: 403 });
     }
 
-    const name = "QuickLaunch Demo User";
+    const name = "Team Command Center Demo User";
 
     const [user] = await db
       .insert(schema.users)
@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
       .from(schema.workspaces)
       .innerJoin(schema.tenants, eq(schema.tenants.id, schema.workspaces.tenantId))
       .where(and(
-        eq(schema.tenants.slug, "quicklaunch-demo"),
-        eq(schema.workspaces.slug, "demo-command"),
+        eq(schema.tenants.slug, "quicklaunch-team-command-center"),
+        eq(schema.workspaces.slug, "command-center-demo"),
       ))
       .limit(1);
 

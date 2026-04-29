@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
-import { getWorkspaceMeetingsIndex } from "../workspace-screen-data";
+import { getWorkspaceMeetingsIndex, getWorkspaceProjectsIndex } from "../workspace-screen-data";
+import { CreateWorkspaceMeetingCard } from "./create-workspace-meeting-card";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string }>;
@@ -33,10 +34,16 @@ export default async function MeetingsPage({ params }: PageProps) {
     redirect(`/${activeRoute.tenantSlug}/${activeRoute.workspaceSlug}/meetings`);
   }
 
-  const meetings = await getWorkspaceMeetingsIndex({
-    tenantId: session.activeTenantId,
-    workspaceId: session.activeWorkspaceId,
-  });
+  const [meetings, projects] = await Promise.all([
+    getWorkspaceMeetingsIndex({
+      tenantId: session.activeTenantId,
+      workspaceId: session.activeWorkspaceId,
+    }),
+    getWorkspaceProjectsIndex({
+      tenantId: session.activeTenantId,
+      workspaceId: session.activeWorkspaceId,
+    }),
+  ]);
 
   return (
     <main className="page-shell app-page-shell">
@@ -50,36 +57,51 @@ export default async function MeetingsPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="record-list">
-        {meetings.length ? (
-          meetings.map((meeting) => (
-            <article key={meeting.id} className="record-card">
-              <div className="record-card-copy">
-                <div className="meta-row">
-                  <strong>{meeting.title}</strong>
-                </div>
-                <p className="entity-preview">{meeting.summary || "No meeting summary yet."}</p>
-                <div className="entity-summary-meta">
-                  <span>{meeting.meetingAt ? new Date(meeting.meetingAt).toLocaleString() : "No meeting time"}</span>
-                  <span>{meeting.projectName || "No linked project"}</span>
-                </div>
-              </div>
-              {meeting.projectSlug ? (
-                <Link
-                  className="button-secondary"
-                  href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${meeting.projectSlug}`}
-                >
-                  View project
-                </Link>
-              ) : null}
-            </article>
-          ))
-        ) : (
-          <section className="card">
-            <h2>No meetings captured</h2>
-            <p className="empty-note">Capture the next meeting from a project room so decisions and follow-up stay connected.</p>
+      <section className="dashboard-grid">
+        <div className="stack">
+          <section className="record-list">
+            {meetings.length ? (
+              meetings.map((meeting) => (
+                <article key={meeting.id} className="record-card">
+                  <div className="record-card-copy">
+                    <div className="meta-row">
+                      <strong>{meeting.title}</strong>
+                    </div>
+                    <p className="entity-preview">{meeting.summary || "No meeting summary yet."}</p>
+                    <div className="entity-summary-meta">
+                      <span>{meeting.meetingAt ? new Date(meeting.meetingAt).toLocaleString() : "No meeting time"}</span>
+                      <span>{meeting.projectName || "No linked project"}</span>
+                    </div>
+                  </div>
+                  {meeting.projectSlug ? (
+                    <Link
+                      className="button-secondary"
+                      href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${meeting.projectSlug}`}
+                    >
+                      Edit in project
+                    </Link>
+                  ) : null}
+                </article>
+              ))
+            ) : (
+              <section className="card">
+                <h2>No meetings captured</h2>
+                <p className="empty-note">Capture the first meeting here or paste a transcript into Capture Hub for AI extraction.</p>
+              </section>
+            )}
           </section>
-        )}
+        </div>
+        <aside className="stack">
+          <CreateWorkspaceMeetingCard projects={projects.map((project) => ({
+            id: project.id,
+            name: project.name,
+            slug: project.slug,
+          }))} />
+          <section className="card">
+            <h2>Meeting workflow</h2>
+            <p className="empty-note">Use this page for quick capture. Open the linked project when you need full edit/delete controls or detailed notes.</p>
+          </section>
+        </aside>
       </section>
     </main>
   );

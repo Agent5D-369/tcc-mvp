@@ -4,6 +4,7 @@ import { getSession } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { ThreadMessagePanel } from "../thread-message-panel";
 import { getThreadOverview } from "../thread-screen-data";
+import { ThreadManagementCard } from "../thread-management-card";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string; threadId: string }>;
@@ -109,7 +110,20 @@ export default async function ThreadDetailPage({ params }: PageProps) {
         </div>
       </section>
 
-      <ThreadMessagePanel threadId={data.thread.id} messages={data.messages} />
+      <section className="dashboard-grid">
+        <div className="stack">
+          <ThreadMessagePanel threadId={data.thread.id} messages={data.messages} />
+        </div>
+        <aside className="stack">
+          <ThreadManagementCard
+            threadId={data.thread.id}
+            tenantSlug={route.tenantSlug}
+            workspaceSlug={route.workspaceSlug}
+            initialTitle={data.thread.title}
+            initialPinned={data.thread.pinned}
+          />
+        </aside>
+      </section>
     </main>
   );
 }

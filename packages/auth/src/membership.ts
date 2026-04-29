@@ -130,8 +130,8 @@ export async function ensureUserWorkspaceMembership(args: {
     const [tenant] = await db
       .insert(schema.tenants)
       .values({
-        name: "QuickLaunch Demo",
-        slug: "quicklaunch-demo",
+        name: "QuickLaunch Team Command Center",
+        slug: "quicklaunch-team-command-center",
         plan: "team",
         status: "active",
         settingsJson: {},
@@ -144,8 +144,8 @@ export async function ensureUserWorkspaceMembership(args: {
       .insert(schema.workspaces)
       .values({
         tenantId: tenant.id,
-        name: "Ops Command",
-        slug: "ops-command",
+        name: "Command Center Demo",
+        slug: "command-center-demo",
         description: "Central workspace for project visibility, meeting follow-through, and decision tracking.",
         visibility: "private",
         createdBy: args.userId,

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { getWorkspaceProjectsIndex } from "../workspace-screen-data";
+import { CreateProjectLauncher } from "../create-project-launcher";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string }>;
@@ -63,38 +64,63 @@ export default async function ProjectsPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="record-list">
-        {projects.length ? (
-          projects.map((project) => (
-            <article key={project.id} className="record-card">
-              <div className="record-card-copy">
-                <div className="meta-row">
-                  <strong>{project.name}</strong>
-                  <span className={getHealthBadgeClass(project.health)}>{project.health}</span>
-                  <span className="badge badge-neutral">{project.status}</span>
-                </div>
-                <p className="entity-preview">
-                  {project.summary || "No project summary yet."}
-                </p>
-                <div className="entity-summary-meta">
-                  <span>{project.openTaskCount} open task{project.openTaskCount === 1 ? "" : "s"}</span>
-                  <span>{project.targetDate ? `Target ${new Date(project.targetDate).toLocaleDateString()}` : "No target date"}</span>
-                </div>
-              </div>
-              <Link
-                className="button-primary"
-                href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${project.slug}`}
-              >
-                Open room
-              </Link>
-            </article>
-          ))
-        ) : (
-          <section className="card">
-            <h2>No projects yet</h2>
-            <p className="empty-note">Create the first project from the Home tab to start organizing work.</p>
+      <section className="dashboard-grid">
+        <div className="stack">
+          <section className="record-list">
+            {projects.length ? (
+              projects.map((project) => (
+                <article key={project.id} className="record-card">
+                  <div className="record-card-copy">
+                    <div className="meta-row">
+                      <strong>{project.name}</strong>
+                      <span className={getHealthBadgeClass(project.health)}>{project.health}</span>
+                      <span className="badge badge-neutral">{project.status}</span>
+                    </div>
+                    <p className="entity-preview">
+                      {project.summary || "No project summary yet."}
+                    </p>
+                    <div className="entity-summary-meta">
+                      <span>{project.openTaskCount} open task{project.openTaskCount === 1 ? "" : "s"}</span>
+                      <span>{project.targetDate ? `Target ${new Date(project.targetDate).toLocaleDateString()}` : "No target date"}</span>
+                    </div>
+                  </div>
+                  <Link
+                    className="button-primary"
+                    href={`/${route.tenantSlug}/${route.workspaceSlug}/projects/${project.slug}`}
+                  >
+                    Open room
+                  </Link>
+                </article>
+              ))
+            ) : (
+              <section className="card">
+                <h2>No projects yet</h2>
+                <p className="empty-note">Create the first project room here. Once it exists, tasks, meetings, decisions, and threads can attach to it.</p>
+              </section>
+            )}
           </section>
-        )}
+        </div>
+
+        <aside className="stack">
+          <CreateProjectLauncher tenantSlug={route.tenantSlug} workspaceSlug={route.workspaceSlug} defaultOpen={!projects.length} />
+          <section className="card">
+            <h2>Project workflow</h2>
+            <ul className="list">
+              <li>
+                <strong>Create</strong>
+                <div className="muted">Start with a name; details are optional.</div>
+              </li>
+              <li>
+                <strong>Edit</strong>
+                <div className="muted">Open the room and use Project settings.</div>
+              </li>
+              <li>
+                <strong>Archive</strong>
+                <div className="muted">Project rooms archive instead of hard-delete so history stays recoverable.</div>
+              </li>
+            </ul>
+          </section>
+        </aside>
       </section>
     </main>
   );

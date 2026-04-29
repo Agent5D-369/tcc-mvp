@@ -6,10 +6,11 @@ import { CreateProjectCard } from "./create-project-card";
 type CreateProjectLauncherProps = {
   tenantSlug: string;
   workspaceSlug: string;
+  defaultOpen?: boolean;
 };
 
-export function CreateProjectLauncher({ tenantSlug, workspaceSlug }: CreateProjectLauncherProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function CreateProjectLauncher({ tenantSlug, workspaceSlug, defaultOpen = false }: CreateProjectLauncherProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <section className="card">
