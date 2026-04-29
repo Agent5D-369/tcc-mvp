@@ -61,8 +61,24 @@ export async function getCompiledKnowledge(args: {
     .groupBy(schema.compiledPages.id)
     .orderBy(desc(schema.compiledPages.updatedAt));
 
+  const projects = await db
+    .select({
+      id: schema.projects.id,
+      name: schema.projects.name,
+      slug: schema.projects.slug,
+      status: schema.projects.status,
+    })
+    .from(schema.projects)
+    .where(and(
+      eq(schema.projects.tenantId, tenantId),
+      eq(schema.projects.workspaceId, workspace.id),
+    ))
+    .orderBy(desc(schema.projects.updatedAt))
+    .limit(40);
+
   return {
     workspace,
+    projects,
     pages: pages.map((page) => ({
       ...page,
       revisionCount: Number(page.revisionCount || 0),
@@ -90,6 +106,7 @@ export async function getCompiledPage(args: {
       sourceConfidenceBps: schema.compiledPages.sourceConfidenceBps,
       updatedAt: schema.compiledPages.updatedAt,
       workspaceId: schema.workspaces.id,
+      projectId: schema.compiledPages.projectId,
       workspaceName: schema.workspaces.name,
       workspaceSlug: schema.workspaces.slug,
       tenantName: schema.tenants.name,
@@ -155,6 +172,40 @@ export async function getCompiledPage(args: {
     ))
     .orderBy(desc(schema.proposals.createdAt));
 
+  const relatedTasks = page.projectId ? await db
+    .select({
+      id: schema.tasks.id,
+      title: schema.tasks.title,
+      priority: schema.tasks.priority,
+      dueAt: schema.tasks.dueAt,
+      statusName: schema.taskStatuses.name,
+    })
+    .from(schema.tasks)
+    .leftJoin(schema.taskStatuses, eq(schema.taskStatuses.id, schema.tasks.statusId))
+    .where(and(
+      eq(schema.tasks.tenantId, tenantId),
+      eq(schema.tasks.workspaceId, page.workspaceId),
+      eq(schema.tasks.projectId, page.projectId),
+    ))
+    .orderBy(desc(schema.tasks.updatedAt))
+    .limit(5) : [];
+
+  const relatedDecisions = page.projectId ? await db
+    .select({
+      id: schema.decisionLog.id,
+      title: schema.decisionLog.title,
+      status: schema.decisionLog.status,
+      decidedAt: schema.decisionLog.decidedAt,
+    })
+    .from(schema.decisionLog)
+    .where(and(
+      eq(schema.decisionLog.tenantId, tenantId),
+      eq(schema.decisionLog.workspaceId, page.workspaceId),
+      eq(schema.decisionLog.projectId, page.projectId),
+    ))
+    .orderBy(desc(schema.decisionLog.updatedAt))
+    .limit(5) : [];
+
   return {
     page: {
       ...page,
@@ -169,6 +220,14 @@ export async function getCompiledPage(args: {
     pendingProposals: pendingProposals.map((proposal) => ({
       ...proposal,
       createdAt: proposal.createdAt.toISOString(),
+    })),
+    relatedTasks: relatedTasks.map((task) => ({
+      ...task,
+      dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+    })),
+    relatedDecisions: relatedDecisions.map((decision) => ({
+      ...decision,
+      decidedAt: decision.decidedAt ? decision.decidedAt.toISOString() : null,
     })),
   };
 }

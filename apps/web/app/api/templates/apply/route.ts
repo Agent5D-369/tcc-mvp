@@ -43,6 +43,29 @@ async function uniqueProjectSlug(args: { tenantId: string; workspaceId: string; 
   throw new Error("Could not generate a unique project slug");
 }
 
+async function uniquePageSlug(args: { tenantId: string; workspaceId: string; slug: string }) {
+  const base = slugify(args.slug) || "template-page";
+
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const slug = attempt === 0 ? base : `${base}-${attempt + 1}`;
+    const [existing] = await db
+      .select({ id: schema.compiledPages.id })
+      .from(schema.compiledPages)
+      .where(and(
+        eq(schema.compiledPages.tenantId, args.tenantId),
+        eq(schema.compiledPages.workspaceId, args.workspaceId),
+        eq(schema.compiledPages.slug, slug),
+      ))
+      .limit(1);
+
+    if (!existing) {
+      return slug;
+    }
+  }
+
+  throw new Error("Could not generate a unique page slug");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ctx = await resolveTenantContext();
@@ -113,6 +136,50 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const pages = [];
+    for (const pageTemplate of template.pages) {
+      const pageSlug = await uniquePageSlug({
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId,
+        slug: pageTemplate.slug,
+      });
+
+      const [page] = await db.insert(schema.compiledPages).values({
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId,
+        projectId: project.id,
+        slug: pageSlug,
+        title: pageTemplate.title,
+        pageType: pageTemplate.pageType,
+        status: "active",
+        summary: pageTemplate.summary,
+        sourceConfidenceBps: 6500,
+        humanOwnerId: ctx.userId,
+        metadataJson: {
+          templateId: template.id,
+          seededBy: "workspace_template",
+        },
+      }).returning({
+        id: schema.compiledPages.id,
+        slug: schema.compiledPages.slug,
+        title: schema.compiledPages.title,
+      });
+
+      await db.insert(schema.compiledPageRevisions).values({
+        tenantId: ctx.tenantId,
+        pageId: page.id,
+        interactionId: null,
+        revisionNumber: 1,
+        contentMarkdown: pageTemplate.contentMarkdown,
+        changeSummary: `Seeded from ${template.name} template.`,
+        reviewStatus: "approved",
+        reviewedBy: ctx.userId,
+        reviewedAt: new Date(),
+      });
+
+      pages.push(page);
+    }
+
     await recordAuditEvent({
       tenantId: ctx.tenantId,
       workspaceId: ctx.workspaceId,
@@ -123,10 +190,11 @@ export async function POST(req: NextRequest) {
       metadataJson: {
         templateId: template.id,
         taskCount: template.tasks.length,
+        pageCount: pages.length,
       },
     });
 
-    return NextResponse.json({ project, template }, { status: 201 });
+    return NextResponse.json({ project, pages, template }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },

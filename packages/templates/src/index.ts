@@ -5,6 +5,13 @@ export type WorkspaceTemplate = {
   summary: string;
   projectName: string;
   projectSummary: string;
+  pages: Array<{
+    title: string;
+    slug: string;
+    pageType: string;
+    summary: string;
+    contentMarkdown: string;
+  }>;
   tasks: Array<{
     title: string;
     description: string;
@@ -21,6 +28,36 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
     summary: "Clarify purpose, boundaries, accountabilities, success measures, cadence, and next review date.",
     projectName: "Team Charter Setup",
     projectSummary: "Create a one-page operating charter so the team knows what it exists to do, what it owns, and when the agreement will be reviewed.",
+    pages: [
+      {
+        title: "Team Charter",
+        slug: "team-charter",
+        pageType: "charter",
+        summary: "Purpose, scope, decision rights, metrics, and review rhythm for this workspace.",
+        contentMarkdown: [
+          "# Team Charter",
+          "",
+          "## Purpose",
+          "Write the reason this team exists and the work it is here to serve.",
+          "",
+          "## Scope",
+          "- In scope:",
+          "- Out of scope:",
+          "",
+          "## Decision Rights",
+          "- The team can decide:",
+          "- Escalation is required when:",
+          "",
+          "## Health Signals",
+          "- Value signal:",
+          "- Capacity signal:",
+          "- Trust signal:",
+          "",
+          "## Review Rhythm",
+          "Review this page quarterly or whenever the team's work changes materially.",
+        ].join("\n"),
+      },
+    ],
     helpsPrevent: ["vision drift", "unclear authority", "scale confusion"],
     tasks: [
       {
@@ -52,6 +89,34 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
     summary: "Map responsibilities, role owners, backups, decision rights, and load risks before invisible work piles up.",
     projectName: "Roles and Load Map",
     projectSummary: "Make ownership visible so work does not concentrate on the most responsible people by default.",
+    pages: [
+      {
+        title: "Roles and Load Map",
+        slug: "roles-and-load-map",
+        pageType: "roles",
+        summary: "Current roles, owners, backups, authority, and load risks.",
+        contentMarkdown: [
+          "# Roles and Load Map",
+          "",
+          "## Active Roles",
+          "| Role | Owner | Backup | Authority | Current Load |",
+          "| --- | --- | --- | --- | --- |",
+          "| Example role | Name | Name | What this role can decide | Light / steady / heavy |",
+          "",
+          "## Unowned Work",
+          "-",
+          "",
+          "## Duplicated Accountability",
+          "-",
+          "",
+          "## Load Risks",
+          "-",
+          "",
+          "## Next Review",
+          "Set a review date so written roles stay aligned with real work.",
+        ].join("\n"),
+      },
+    ],
     helpsPrevent: ["burnout", "wrong people in key roles", "hidden power"],
     tasks: [
       {
@@ -83,6 +148,33 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
     summary: "Record drivers, proposals, objections, outcomes, owners, and review dates for decisions that matter.",
     projectName: "Decision Ledger Setup",
     projectSummary: "Create a lightweight decision system so agreements stay findable, reviewable, and connected to the reason they were made.",
+    pages: [
+      {
+        title: "Decision Ledger",
+        slug: "decision-ledger",
+        pageType: "ledger",
+        summary: "A source-backed record of important decisions and their review dates.",
+        contentMarkdown: [
+          "# Decision Ledger",
+          "",
+          "## Logging Rule",
+          "Log decisions that affect money, roles, policy, strategy, client commitments, safety, or recurring work.",
+          "",
+          "## Decision Template",
+          "- Driver:",
+          "- Proposal:",
+          "- Objections or risks:",
+          "- Decision:",
+          "- Owner:",
+          "- Date decided:",
+          "- Review date:",
+          "- Source:",
+          "",
+          "## Recent Decisions",
+          "-",
+        ].join("\n"),
+      },
+    ],
     helpsPrevent: ["decision amnesia", "governance confusion", "recurring conflict"],
     tasks: [
       {
@@ -114,6 +206,33 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
     summary: "Create a calm default path for tensions, feedback, escalation, and learning before conflict is hot.",
     projectName: "Conflict Repair Path",
     projectSummary: "Give the team a trusted way to name tension, seek repair, escalate safely, and document what was learned.",
+    pages: [
+      {
+        title: "Conflict Repair Path",
+        slug: "conflict-repair-path",
+        pageType: "sop",
+        summary: "A default route for naming tension, repairing trust, and learning from conflict.",
+        contentMarkdown: [
+          "# Conflict Repair Path",
+          "",
+          "## First Step",
+          "Name the tension early, directly, and with enough care that repair remains possible.",
+          "",
+          "## Escalation Levels",
+          "1. Direct conversation",
+          "2. Supported conversation",
+          "3. Facilitated review",
+          "4. Safety or integrity escalation",
+          "",
+          "## Facilitator Role",
+          "- Current facilitator:",
+          "- Backup:",
+          "",
+          "## Learning Log",
+          "Capture what changed without turning this page into blame storage.",
+        ].join("\n"),
+      },
+    ],
     helpsPrevent: ["unresolved tension", "power shadows", "trust erosion"],
     tasks: [
       {
@@ -145,6 +264,28 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
     summary: "Track cross-team requests, owners, due dates, blockers, and delivery promises in one visible place.",
     projectName: "Dependency Map",
     projectSummary: "Make handoffs and cross-team promises visible so growth does not create silent coordination failure.",
+    pages: [
+      {
+        title: "Dependency Map",
+        slug: "dependency-map",
+        pageType: "coordination",
+        summary: "Active dependencies, owners, due dates, blockers, and escalation triggers.",
+        contentMarkdown: [
+          "# Dependency Map",
+          "",
+          "## Active Dependencies",
+          "| Need | Waiting on | Owner | Due | Status |",
+          "| --- | --- | --- | --- | --- |",
+          "| | | | | |",
+          "",
+          "## Blockers",
+          "-",
+          "",
+          "## Escalation Trigger",
+          "Define when a missed dependency becomes a leadership or client-risk issue.",
+        ].join("\n"),
+      },
+    ],
     helpsPrevent: ["scale trap", "missed handoffs", "fragmented communication"],
     tasks: [
       {
@@ -176,6 +317,32 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
     summary: "Make runway, commitments, revenue dependencies, and founder-energy risks visible enough to act on.",
     projectName: "Financial Reality Check",
     projectSummary: "Create a simple operating view of money and capacity so the team can make grounded commitments.",
+    pages: [
+      {
+        title: "Financial Reality Check",
+        slug: "financial-reality-check",
+        pageType: "operating-review",
+        summary: "Runway, commitments, revenue dependencies, and capacity risks in one reviewable page.",
+        contentMarkdown: [
+          "# Financial Reality Check",
+          "",
+          "## Current Picture",
+          "- Cash/runway:",
+          "- Committed expenses:",
+          "- Expected revenue:",
+          "- Pressure date:",
+          "",
+          "## Single-Point Dependencies",
+          "-",
+          "",
+          "## Commitments vs Capacity",
+          "-",
+          "",
+          "## Next Review",
+          "Set a recurring review so money stays visible as an operating signal.",
+        ].join("\n"),
+      },
+    ],
     helpsPrevent: ["financial fragility", "overpromising", "founder bottleneck"],
     tasks: [
       {

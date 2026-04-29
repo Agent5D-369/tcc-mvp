@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getCompiledPage } from "@workspace-kit/knowledge";
+import { KnowledgePageEditor } from "./knowledge-page-editor";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string; pageSlug: string }>;
@@ -73,16 +74,43 @@ export default async function CompiledPageDetail({ params }: PageProps) {
       </section>
 
       <section className="knowledge-detail-grid">
-        <article className="card knowledge-document">
-          <h2>Approved page</h2>
-          {currentRevision ? (
-            <pre>{currentRevision.contentMarkdown}</pre>
-          ) : (
-            <p className="empty-note">No approved content yet.</p>
-          )}
-        </article>
+        <KnowledgePageEditor
+          pageId={data.page.id}
+          title={data.page.title}
+          pageType={data.page.pageType}
+          summary={data.page.summary}
+          contentMarkdown={currentRevision?.contentMarkdown ?? ""}
+        />
 
         <aside className="stack">
+          <section className="card">
+            <h2>Linked work</h2>
+            {data.relatedTasks.length || data.relatedDecisions.length ? (
+              <div className="linked-work-list">
+                {data.relatedTasks.map((task) => (
+                  <div className="linked-work-item" key={task.id}>
+                    <strong>{task.title}</strong>
+                    <div className="meta-row">
+                      <span className="badge badge-neutral">{task.statusName || "task"}</span>
+                      <span className="badge badge-neutral">{task.priority}</span>
+                    </div>
+                  </div>
+                ))}
+                {data.relatedDecisions.map((decision) => (
+                  <div className="linked-work-item" key={decision.id}>
+                    <strong>{decision.title}</strong>
+                    <div className="meta-row">
+                      <span className="badge badge-neutral">decision</span>
+                      <span className="badge badge-neutral">{decision.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-note">Link this page to a project to show recent related tasks and decisions.</p>
+            )}
+          </section>
+
           <section className="card">
             <h2>Source chain</h2>
             {data.revisions.length ? (
