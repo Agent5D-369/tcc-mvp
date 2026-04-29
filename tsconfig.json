@@ -25,7 +25,9 @@
       "@workspace-kit/ai-core": ["packages/ai-core/src/index.ts"],
       "@workspace-kit/ai-core/*": ["packages/ai-core/src/*"],
       "@workspace-kit/approvals": ["packages/approvals/src/index.ts"],
-      "@workspace-kit/approvals/*": ["packages/approvals/src/*"]
+      "@workspace-kit/approvals/*": ["packages/approvals/src/*"],
+      "@workspace-kit/templates": ["packages/templates/src/index.ts"],
+      "@workspace-kit/templates/*": ["packages/templates/src/*"]
     },
     "esModuleInterop": true,
     "skipLibCheck": true,

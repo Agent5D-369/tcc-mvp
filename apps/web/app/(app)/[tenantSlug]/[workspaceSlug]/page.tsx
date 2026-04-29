@@ -79,6 +79,11 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
       detail: "Review managed/BYO keys, budget, and Markdown agents.",
       href: `${baseHref}/settings/agents`,
     },
+    {
+      label: "Use templates",
+      detail: "Start with operating patterns that clarify roles, decisions, dependencies, and repair paths.",
+      href: `${baseHref}/templates`,
+    },
   ];
 
   return (

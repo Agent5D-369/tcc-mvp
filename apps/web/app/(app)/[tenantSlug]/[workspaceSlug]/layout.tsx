@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getWorkspaceShellData } from "./workspace-screen-data";
@@ -34,18 +35,26 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
             <h1>{shell.currentWorkspace.workspaceName}</h1>
             <p>{shell.currentWorkspace.workspaceDescription || "Run projects, tasks, meetings, and decisions from one command surface."}</p>
           </div>
-          <WorkspaceSwitcher
-            value={`/${route.tenantSlug}/${route.workspaceSlug}`}
-            options={shell.contexts.map((context) => ({
-              tenantId: context.tenantId,
-              tenantSlug: context.tenantSlug,
-              tenantName: context.tenantName,
-              workspaceId: context.workspaceId,
-              workspaceSlug: context.workspaceSlug,
-              workspaceName: context.workspaceName,
-              role: context.role,
-            }))}
-          />
+          <div className="workspace-header-actions">
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/help`}>
+              Help
+            </Link>
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/templates`}>
+              Templates
+            </Link>
+            <WorkspaceSwitcher
+              value={`/${route.tenantSlug}/${route.workspaceSlug}`}
+              options={shell.contexts.map((context) => ({
+                tenantId: context.tenantId,
+                tenantSlug: context.tenantSlug,
+                tenantName: context.tenantName,
+                workspaceId: context.workspaceId,
+                workspaceSlug: context.workspaceSlug,
+                workspaceName: context.workspaceName,
+                role: context.role,
+              }))}
+            />
+          </div>
         </header>
         <div className="workspace-content">{children}</div>
         <MobileBottomNav tenantSlug={route.tenantSlug} workspaceSlug={route.workspaceSlug} />

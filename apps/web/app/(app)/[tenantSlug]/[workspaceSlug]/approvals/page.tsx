@@ -156,6 +156,10 @@ export default async function ApprovalsPage({ params, searchParams }: PageProps)
       </section>
 
       <section className="approval-layout">
+        <section className="notice">
+          <strong>Approval rule of thumb.</strong>
+          <span>Approve only what you would want the team to find later. Edit rough wording, reject noise, and keep durable memory tied to evidence.</span>
+        </section>
         {data.queues.map((queue) => (
           <section className="approval-lane" key={queue.id}>
             <div className="split approval-lane-header">

@@ -108,6 +108,10 @@ export default async function CapturePage({ params, searchParams }: PageProps) {
 
       <section className="capture-layout">
         <form action={createCapture} className="card capture-form">
+          <div className="notice">
+            <strong>Use this when the input is messy.</strong>
+            <span>Capture first, then extract. TCC keeps the original source so proposed tasks, decisions, and memory stay reviewable.</span>
+          </div>
           <div className="form-grid">
             <label>
               <span>Title</span>
