@@ -49,6 +49,7 @@ export default async function SettingsPage({ params }: PageProps) {
     workspaceId: shell.currentWorkspace.workspaceId,
   });
   const canManage = ["owner", "admin"].includes(shell.currentWorkspace.role);
+  const roleLabel = shell.currentWorkspace.role.slice(0, 1).toUpperCase() + shell.currentWorkspace.role.slice(1);
 
   return (
     <main className="page-shell app-page-shell">
@@ -70,7 +71,9 @@ export default async function SettingsPage({ params }: PageProps) {
                 <div className="kicker">Current access</div>
                 <h2 className="section-title">{shell.currentWorkspace.tenantName} / {shell.currentWorkspace.workspaceName}</h2>
               </div>
-              <p className="empty-note">Role: {shell.currentWorkspace.role}</p>
+              <span className={shell.currentWorkspace.role === "owner" ? "badge badge-success" : "badge badge-neutral"}>
+                Role: {roleLabel}
+              </span>
             </div>
 
             <div className="list">
@@ -85,6 +88,10 @@ export default async function SettingsPage({ params }: PageProps) {
               <div className="list-row">
                 <strong>Account type</strong>
                 <div className="muted">{session.isPlatformAdmin ? "Platform admin" : "Standard member account"}</div>
+              </div>
+              <div className="list-row">
+                <strong>Scope guardrail</strong>
+                <div className="muted">Records on this route are loaded through your membership in this tenant and this workspace.</div>
               </div>
             </div>
           </section>
@@ -119,6 +126,11 @@ export default async function SettingsPage({ params }: PageProps) {
                       <span>{workspace.memberCount} member{workspace.memberCount === 1 ? "" : "s"}</span>
                       <span>{workspace.projectCount} project{workspace.projectCount === 1 ? "" : "s"}</span>
                     </div>
+                    {workspace.slug === route.workspaceSlug ? (
+                      <p className="entity-preview">You are viewing this workspace. Tasks, meetings, decisions, projects, approvals, and memory stay scoped here unless explicitly copied elsewhere.</p>
+                    ) : (
+                      <p className="entity-preview">Listed as tenant structure only. Open work from this workspace is not mixed into the current workspace views.</p>
+                    )}
                   </div>
                 </article>
               ))}
@@ -139,6 +151,18 @@ export default async function SettingsPage({ params }: PageProps) {
         <aside className="stack">
           <CreateWorkspaceCard canManage={canManage} />
           <CreateTenantCard />
+          <section className="card">
+            <div className="section-heading">
+              <div>
+                <div className="kicker">Guardrails</div>
+                <h2 className="section-title">Deletion is locked for now</h2>
+              </div>
+            </div>
+            <p className="empty-note">
+              Tenant and workspace deletion is intentionally not exposed in the MVP. Add archive, export, last-owner checks,
+              audit logging, and typed confirmation before destructive controls go live.
+            </p>
+          </section>
         </aside>
       </section>
     </main>
