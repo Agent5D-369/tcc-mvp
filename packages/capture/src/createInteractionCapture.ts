@@ -1,5 +1,5 @@
 import { and, asc, eq } from "drizzle-orm";
-import { createOpenRouterChat } from "@workspace-kit/ai-core";
+import { createOpenRouterChat, resolveTenantOpenRouterKey } from "@workspace-kit/ai-core";
 import { db, schema } from "@workspace-kit/db";
 
 const sourceTypeMap = {
@@ -209,32 +209,53 @@ export async function extractInteractionProposals(args: {
 
   let extracted: ExtractedProposal[] | null = null;
 
-  if (process.env.OPENROUTER_API_KEY) {
+  try {
+    const runtime = await resolveTenantOpenRouterKey(args.tenantId);
     const completion = await createOpenRouterChat({
+      apiKey: runtime.apiKey,
+      model: runtime.model,
+      maxOutputTokens: runtime.maxOutputTokens,
       messages: [
-        {
-          role: "system",
-          content: [
-            "You extract operational proposals for Team Command Center.",
-            "Return JSON only with a top-level proposals array.",
-            "Allowed targetType values: task, decision, compiled_page, memory, open_question.",
-            "Every proposal must include title, bodyMarkdown, sourceExcerpt, confidenceBps, and proposedPatchJson.",
-            "Do not create final writes. These are approval inbox proposals only.",
-          ].join("\n"),
-        },
-        {
-          role: "user",
-          content: [
-            `Title: ${interaction.title}`,
-            `Source: ${interaction.sourceLabel || interaction.sourceType}`,
-            "",
-            interaction.rawContent || "",
-          ].join("\n"),
-        },
-      ],
+          {
+            role: "system",
+            content: [
+              "You extract operational proposals for Team Command Center.",
+              "Return JSON only with a top-level proposals array.",
+              "Allowed targetType values: task, decision, compiled_page, memory, open_question.",
+              "Every proposal must include title, bodyMarkdown, sourceExcerpt, confidenceBps, and proposedPatchJson.",
+              "Do not create final writes. These are approval inbox proposals only.",
+            ].join("\n"),
+          },
+          {
+            role: "user",
+            content: [
+              `Title: ${interaction.title}`,
+              `Source: ${interaction.sourceLabel || interaction.sourceType}`,
+              "",
+              interaction.rawContent || "",
+            ].join("\n"),
+          },
+        ],
+      });
+    const usage = (completion.raw as any)?.usage ?? {};
+
+    await db.insert(schema.modelUsageEvents).values({
+      tenantId: args.tenantId,
+      workspaceId: args.workspaceId,
+      projectId: interaction.projectId,
+      threadId: null,
+      userId: args.userId,
+      agentId: null,
+      provider: completion.provider || "openrouter",
+      modelName: completion.model || runtime.model,
+      inputTokens: Number(usage.prompt_tokens || usage.input_tokens || 0),
+      outputTokens: Number(usage.completion_tokens || usage.output_tokens || 0),
+      costMicros: 0,
     });
 
     extracted = safeJsonFromText(completion.text)?.proposals ?? null;
+  } catch {
+    extracted = null;
   }
 
   const proposals = (extracted?.length ? extracted : fallbackProposals(interaction))

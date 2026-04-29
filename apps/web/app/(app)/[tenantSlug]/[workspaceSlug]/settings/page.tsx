@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSession, getWorkspaceLimitForPlan, listWorkspaceMembers } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { CreateTenantCard } from "./create-tenant-card";
@@ -157,6 +158,20 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
 
         <aside className="stack">
+          <section className="card">
+            <div className="section-heading">
+              <div>
+                <div className="kicker">AI control</div>
+                <h2 className="section-title">Models, keys, and budget</h2>
+              </div>
+            </div>
+            <p className="empty-note">
+              Choose QuickLaunch-managed AI or bring a tenant-owned OpenRouter key. Keep agent costs capped before broad rollout.
+            </p>
+            <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/settings/ai`}>
+              Open AI settings
+            </Link>
+          </section>
           <CreateWorkspaceCard
             canManage={canManage}
             workspaceCount={workspaceCount}

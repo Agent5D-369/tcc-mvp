@@ -1,6 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
 import { createOpenRouterChat, type ChatMessage } from "./openrouter";
+import { resolveTenantOpenRouterKey } from "./tenantAiSettings";
 
 export async function completeThreadMessage(args: {
   tenantId: string;
@@ -64,9 +65,12 @@ export async function completeThreadMessage(args: {
     });
   }
 
+  const runtime = await resolveTenantOpenRouterKey(args.tenantId);
   const completion = await createOpenRouterChat({
-    model: args.model,
+    apiKey: runtime.apiKey,
+    model: args.model || runtime.model,
     messages,
+    maxOutputTokens: runtime.maxOutputTokens,
   });
 
   const usage = (completion.raw as any)?.usage ?? {};

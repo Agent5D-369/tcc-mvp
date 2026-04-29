@@ -4,8 +4,10 @@ export type ChatMessage = {
 };
 
 export type OpenRouterChatArgs = {
+  apiKey?: string;
   model?: string;
   messages: ChatMessage[];
+  maxOutputTokens?: number;
 };
 
 export type OpenRouterChatResult = {
@@ -16,7 +18,7 @@ export type OpenRouterChatResult = {
 };
 
 export async function createOpenRouterChat(args: OpenRouterChatArgs): Promise<OpenRouterChatResult> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = args.apiKey || process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("Missing OPENROUTER_API_KEY");
   }
@@ -34,6 +36,7 @@ export async function createOpenRouterChat(args: OpenRouterChatArgs): Promise<Op
     body: JSON.stringify({
       model,
       messages: args.messages,
+      ...(args.maxOutputTokens ? { max_tokens: args.maxOutputTokens } : {}),
     }),
   });
 

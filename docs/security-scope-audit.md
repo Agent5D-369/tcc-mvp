@@ -48,6 +48,9 @@ Last updated: 2026-04-28
 
 - Mobile and desktop should call the same server-owned AI routes. The browser should never hold provider keys or choose unsafe direct provider access.
 - OpenRouter remains the first multimodel adapter. Add provider/model policy controls per tenant/workspace before exposing model choice broadly.
+- Tenant AI settings now support managed, bring-your-own-key, and disabled modes.
+- Tenant-owned provider keys are stored separately from tenant display settings and encrypted with `AI_KEY_ENCRYPTION_SECRET`.
+- Owners/admins manage AI mode, default model, monthly budget, and per-run output token caps from Settings -> AI.
 - Agent MD should be a versioned server-side library of markdown agent definitions with metadata for scope, allowed roles, model policy, input schema, and approval behavior.
 - Desktop can show a split view: source material, selected agent, output, and approval inbox.
 - Mobile should use the existing bottom navigation and sheet pattern: choose an agent, run against selected source, then review proposals in compact approval cards.

@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { projects } from "./projects";
@@ -38,6 +39,21 @@ export const modelPolicies = pgTable("model_policies", {
   routingJson: jsonb("routing_json").$type<Record<string, unknown>>().default({}).notNull(),
   ...timestamps,
 });
+
+export const tenantAiProviderKeys = pgTable("tenant_ai_provider_keys", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  encryptedKey: text("encrypted_key").notNull(),
+  keyHint: text("key_hint"),
+  status: text("status").default("connected").notNull(),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  tenantProviderIdx: uniqueIndex("tenant_ai_provider_keys_tenant_provider_unique").on(t.tenantId, t.provider),
+}));
 
 export const agentDefinitions = pgTable("agent_definitions", {
   id: uuid("id").defaultRandom().primaryKey(),
