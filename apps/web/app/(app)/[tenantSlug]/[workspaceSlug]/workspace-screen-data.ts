@@ -13,6 +13,7 @@ export async function getWorkspaceShellData(args: {
       tenantId: schema.tenants.id,
       tenantName: schema.tenants.name,
       tenantSlug: schema.tenants.slug,
+      tenantPlan: schema.tenants.plan,
       workspaceId: schema.workspaces.id,
       workspaceName: schema.workspaces.name,
       workspaceSlug: schema.workspaces.slug,

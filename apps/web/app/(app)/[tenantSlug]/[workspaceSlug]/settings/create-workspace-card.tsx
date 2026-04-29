@@ -7,15 +7,25 @@ import { useWorkspaceFeedback } from "../workspace-feedback";
 
 type CreateWorkspaceCardProps = {
   canManage: boolean;
+  workspaceCount: number;
+  workspaceLimit: number;
+  tenantPlan: string;
 };
 
-export function CreateWorkspaceCard({ canManage }: CreateWorkspaceCardProps) {
+export function CreateWorkspaceCard({
+  canManage,
+  workspaceCount,
+  workspaceLimit,
+  tenantPlan,
+}: CreateWorkspaceCardProps) {
   const router = useRouter();
   const { pushToast } = useWorkspaceFeedback();
   const [workspaceName, setWorkspaceName] = useState("");
   const [workspaceDescription, setWorkspaceDescription] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const isAtLimit = workspaceCount >= workspaceLimit;
 
   if (!canManage) {
     return (
@@ -64,6 +74,10 @@ export function CreateWorkspaceCard({ canManage }: CreateWorkspaceCardProps) {
         <p className="empty-note">Keep the structure light. Create a new workspace only when the work truly needs a separate operating surface.</p>
       </div>
 
+      <p className="empty-note">
+        {tenantPlan} plan usage: {workspaceCount} of {workspaceLimit} workspace{workspaceLimit === 1 ? "" : "s"} used.
+      </p>
+
       <form className="form-grid" onSubmit={onSubmit}>
         <label>
           <span className="field-label">Workspace name</span>
@@ -72,10 +86,11 @@ export function CreateWorkspaceCard({ canManage }: CreateWorkspaceCardProps) {
             onChange={(event) => setWorkspaceName(event.target.value)}
             placeholder="Delivery Command"
             required
+            disabled={isAtLimit}
           />
         </label>
 
-        <button className="inline-quiet-button" type="button" onClick={() => setShowDetails((current) => !current)}>
+        <button className="inline-quiet-button" type="button" disabled={isAtLimit} onClick={() => setShowDetails((current) => !current)}>
           {showDetails ? "Hide details" : "Add details"}
         </button>
 
@@ -87,12 +102,17 @@ export function CreateWorkspaceCard({ canManage }: CreateWorkspaceCardProps) {
               onChange={(event) => setWorkspaceDescription(event.target.value)}
               rows={3}
               placeholder="What this workspace owns and what the team should run here."
+              disabled={isAtLimit}
             />
           </label>
         ) : null}
 
-        <button className="button-primary" type="submit" disabled={isSaving}>
-          {isSaving ? "Creating..." : "Create workspace"}
+        {isAtLimit ? (
+          <p className="form-error">This tenant has reached its current workspace limit.</p>
+        ) : null}
+
+        <button className="button-primary" type="submit" disabled={isSaving || isAtLimit}>
+          {isSaving ? "Creating..." : isAtLimit ? "Plan limit reached" : "Create workspace"}
         </button>
       </form>
     </section>

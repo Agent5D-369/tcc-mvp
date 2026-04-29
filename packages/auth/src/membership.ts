@@ -10,6 +10,19 @@ function slugifyName(value: string) {
     .slice(0, 80);
 }
 
+export type TenantPlan = "free" | "pro" | "team" | "enterprise";
+
+export const PLAN_WORKSPACE_LIMITS: Record<TenantPlan, number> = {
+  free: 1,
+  pro: 3,
+  team: 10,
+  enterprise: 50,
+};
+
+export function getWorkspaceLimitForPlan(plan: string) {
+  return PLAN_WORKSPACE_LIMITS[plan as TenantPlan] ?? PLAN_WORKSPACE_LIMITS.free;
+}
+
 async function ensureUniqueTenantSlug(name: string) {
   const base = slugifyName(name) || "tenant";
 
@@ -310,7 +323,20 @@ export async function createTenantWorkspaceForUser(args: {
   tenantName: string;
   workspaceName: string;
   workspaceDescription?: string | null;
+  allowAdditionalTenant?: boolean;
 }) {
+  if (!args.allowAdditionalTenant) {
+    const [existingTenantMembership] = await db
+      .select({ tenantId: schema.memberships.tenantId })
+      .from(schema.memberships)
+      .where(eq(schema.memberships.userId, args.userId))
+      .limit(1);
+
+    if (existingTenantMembership) {
+      throw new Error("This account already belongs to an organization. Use workspace creation inside the current tenant.");
+    }
+  }
+
   const tenantSlug = await ensureUniqueTenantSlug(args.tenantName);
 
   const [tenant] = await db
@@ -385,12 +411,11 @@ export async function createWorkspaceForTenant(args: {
   workspaceDescription?: string | null;
   creatorRole: string;
 }) {
-  const workspaceSlug = await ensureUniqueWorkspaceSlug(args.tenantId, args.workspaceName);
-
   const [tenant] = await db
     .select({
       slug: schema.tenants.slug,
       name: schema.tenants.name,
+      plan: schema.tenants.plan,
     })
     .from(schema.tenants)
     .where(eq(schema.tenants.id, args.tenantId))
@@ -399,6 +424,20 @@ export async function createWorkspaceForTenant(args: {
   if (!tenant) {
     throw new Error("Tenant not found");
   }
+
+  const [workspaceSummary] = await db
+    .select({
+      total: sql<number>`count(*)`.mapWith(Number),
+    })
+    .from(schema.workspaces)
+    .where(eq(schema.workspaces.tenantId, args.tenantId));
+
+  const workspaceLimit = getWorkspaceLimitForPlan(tenant.plan);
+  if ((workspaceSummary?.total ?? 0) >= workspaceLimit) {
+    throw new Error(`This tenant is on the ${tenant.plan} plan and is limited to ${workspaceLimit} workspace${workspaceLimit === 1 ? "" : "s"}.`);
+  }
+
+  const workspaceSlug = await ensureUniqueWorkspaceSlug(args.tenantId, args.workspaceName);
 
   const [workspace] = await db
     .insert(schema.workspaces)

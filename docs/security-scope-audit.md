@@ -24,12 +24,14 @@ Last updated: 2026-04-28
 - Workspace settings redirects to the active workspace route instead of rendering arbitrary typed routes.
 - Workspace rename/edit is restricted to owner/admin and only for the active workspace.
 - Team member add/update/remove is restricted to owner/admin with owner-specific protections.
+- Standard accounts can create one tenant through onboarding. Additional tenant creation is reserved for platform admins.
+- Workspace creation is enforced against the current tenant plan limit in the server-side membership service.
 - Tenant and workspace deletion is not exposed in the UI.
 
 ## Known Gaps Before Production Signup
 
-- Subscription workspace limits are not enforced yet. The next subscription layer should store a plan/workspace limit and enforce it inside workspace creation.
-- Signup should create exactly one tenant and one initial workspace for a new user. The current demo/bootstrap helper can auto-place a no-membership user into an existing first workspace and should be retired or restricted to demo-only code before open signup.
+- Subscription workspace limits now use static plan defaults. The next subscription layer should store paid limits from billing or tenant settings instead of relying only on hardcoded plan defaults.
+- Signup creates one tenant and one initial workspace through onboarding. The current demo/bootstrap helper can still auto-place a no-membership user into an existing first workspace when explicitly enabled by environment and should stay disabled for open signup.
 - Tenant/workspace deletion needs a soft-delete/archive model, export path, typed confirmation, last-owner checks, billing/subscription checks, and audit log entries before it is exposed.
 - Audit logs are not yet surfaced for membership, workspace, tenant, or AI actions.
 - Tenant workspace index visibility should become a tenant policy: either visible to all tenant members or restricted to owner/admin.
@@ -37,9 +39,10 @@ Last updated: 2026-04-28
 ## Subscription Direction
 
 - Free/pilot: one tenant, one workspace.
-- Team: one tenant, limited workspace count based on subscription.
-- Growth/enterprise: higher workspace limit, tenant policy controls, and advanced audit/export controls.
-- Workspace creation should check the current tenant plan before inserting a workspace.
+- Pro: one tenant, up to three workspaces.
+- Team: one tenant, up to ten workspaces.
+- Enterprise: managed limit, currently capped at fifty workspaces until billing/contract metadata is added.
+- Workspace creation checks the current tenant plan before inserting a workspace.
 
 ## AI, Multimodel, and Agent MD Direction
 

@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { readApiResult } from "../../../../lib/read-api-result";
 import { useWorkspaceFeedback } from "../workspace-feedback";
 
-export function CreateTenantCard() {
+type CreateTenantCardProps = {
+  canCreateTenant: boolean;
+};
+
+export function CreateTenantCard({ canCreateTenant }: CreateTenantCardProps) {
   const router = useRouter();
   const { pushToast } = useWorkspaceFeedback();
   const [tenantName, setTenantName] = useState("");
@@ -50,8 +54,14 @@ export function CreateTenantCard() {
           <div className="kicker">New organization</div>
           <h2 className="section-title">Start another tenant</h2>
         </div>
-        <p className="empty-note">Use this when you need a separate organization boundary, not just another workspace.</p>
+        <p className="empty-note">
+          Standard signup creates one organization. Platform admins can create extra tenant boundaries for demos or managed rollouts.
+        </p>
       </div>
+
+      {!canCreateTenant ? (
+        <p className="form-error">Tenant creation is locked for standard accounts. Add workspaces inside the current tenant as the subscription allows.</p>
+      ) : null}
 
       <form className="form-grid" onSubmit={onSubmit}>
         <label>
@@ -61,6 +71,7 @@ export function CreateTenantCard() {
             onChange={(event) => setTenantName(event.target.value)}
             placeholder="Client Success"
             required
+            disabled={!canCreateTenant}
           />
         </label>
 
@@ -71,10 +82,11 @@ export function CreateTenantCard() {
             onChange={(event) => setWorkspaceName(event.target.value)}
             placeholder="Ops Command"
             required
+            disabled={!canCreateTenant}
           />
         </label>
 
-        <button className="inline-quiet-button" type="button" onClick={() => setShowDetails((current) => !current)}>
+        <button className="inline-quiet-button" type="button" disabled={!canCreateTenant} onClick={() => setShowDetails((current) => !current)}>
           {showDetails ? "Hide details" : "Add details"}
         </button>
 
@@ -86,12 +98,13 @@ export function CreateTenantCard() {
               onChange={(event) => setWorkspaceDescription(event.target.value)}
               rows={3}
               placeholder="What this workspace is responsible for."
+              disabled={!canCreateTenant}
             />
           </label>
         ) : null}
 
-        <button className="button-primary" type="submit" disabled={isSaving}>
-          {isSaving ? "Creating..." : "Create organization"}
+        <button className="button-primary" type="submit" disabled={isSaving || !canCreateTenant}>
+          {isSaving ? "Creating..." : canCreateTenant ? "Create organization" : "Tenant creation locked"}
         </button>
       </form>
     </section>

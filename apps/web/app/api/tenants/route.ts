@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       tenantName: body.tenantName,
       workspaceName: body.workspaceName,
       workspaceDescription: body.workspaceDescription,
+      allowAdditionalTenant: session.isPlatformAdmin,
     });
 
     await setActiveWorkspacePreference({

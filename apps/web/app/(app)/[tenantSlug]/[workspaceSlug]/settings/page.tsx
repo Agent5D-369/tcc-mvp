@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSession, listWorkspaceMembers } from "@workspace-kit/auth";
+import { getSession, getWorkspaceLimitForPlan, listWorkspaceMembers } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { CreateTenantCard } from "./create-tenant-card";
 import { CreateWorkspaceCard } from "./create-workspace-card";
@@ -50,6 +50,8 @@ export default async function SettingsPage({ params }: PageProps) {
   });
   const canManage = ["owner", "admin"].includes(shell.currentWorkspace.role);
   const roleLabel = shell.currentWorkspace.role.slice(0, 1).toUpperCase() + shell.currentWorkspace.role.slice(1);
+  const workspaceLimit = getWorkspaceLimitForPlan(shell.currentWorkspace.tenantPlan);
+  const workspaceCount = tenantWorkspaces.length;
 
   return (
     <main className="page-shell app-page-shell">
@@ -88,6 +90,12 @@ export default async function SettingsPage({ params }: PageProps) {
               <div className="list-row">
                 <strong>Account type</strong>
                 <div className="muted">{session.isPlatformAdmin ? "Platform admin" : "Standard member account"}</div>
+              </div>
+              <div className="list-row">
+                <strong>Plan limit</strong>
+                <div className="muted">
+                  {shell.currentWorkspace.tenantPlan} plan: {workspaceCount} of {workspaceLimit} workspace{workspaceLimit === 1 ? "" : "s"} used
+                </div>
               </div>
               <div className="list-row">
                 <strong>Scope guardrail</strong>
@@ -149,8 +157,13 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
 
         <aside className="stack">
-          <CreateWorkspaceCard canManage={canManage} />
-          <CreateTenantCard />
+          <CreateWorkspaceCard
+            canManage={canManage}
+            workspaceCount={workspaceCount}
+            workspaceLimit={workspaceLimit}
+            tenantPlan={shell.currentWorkspace.tenantPlan}
+          />
+          <CreateTenantCard canCreateTenant={session.isPlatformAdmin} />
           <section className="card">
             <div className="section-heading">
               <div>
