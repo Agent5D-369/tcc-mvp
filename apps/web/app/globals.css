@@ -757,6 +757,19 @@ textarea {
   min-height: 44px;
 }
 
+.help-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.danger-confirmation {
+  display: grid;
+  gap: 10px;
+  max-width: 360px;
+}
+
 .toggle-row {
   display: flex;
   align-items: center;

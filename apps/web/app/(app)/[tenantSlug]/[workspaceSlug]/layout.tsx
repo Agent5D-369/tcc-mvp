@@ -42,6 +42,9 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
             <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/templates`}>
               Templates
             </Link>
+            <a className="button-secondary" href="/api/auth/signout?callbackUrl=/signin">
+              Sign out
+            </a>
             <WorkspaceSwitcher
               value={`/${route.tenantSlug}/${route.workspaceSlug}`}
               options={shell.contexts.map((context) => ({

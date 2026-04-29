@@ -7,6 +7,7 @@ import { CreateTenantCard } from "./create-tenant-card";
 import { CreateWorkspaceCard } from "./create-workspace-card";
 import { WorkspaceSettingsCard } from "./workspace-settings-card";
 import { WorkspaceMembersCard } from "./workspace-members-card";
+import { WorkspaceDeleteButton } from "./workspace-delete-button";
 import { getTenantWorkspaceIndex, getWorkspaceShellData } from "../workspace-screen-data";
 
 type PageProps = {
@@ -143,6 +144,15 @@ export default async function SettingsPage({ params }: PageProps) {
                       <p className="entity-preview">Listed as tenant structure only. Open work from this workspace is not mixed into the current workspace views.</p>
                     )}
                   </div>
+                  {canManage ? (
+                    <div className="record-card-actions">
+                      <WorkspaceDeleteButton
+                        workspaceId={workspace.id}
+                        workspaceName={workspace.name}
+                        disabled={workspace.slug === route.workspaceSlug}
+                      />
+                    </div>
+                  ) : null}
                 </article>
               ))}
             </div>
@@ -211,12 +221,12 @@ export default async function SettingsPage({ params }: PageProps) {
             <div className="section-heading">
               <div>
                 <div className="kicker">Guardrails</div>
-                <h2 className="section-title">Deletion is locked for now</h2>
+                <h2 className="section-title">Workspace deletion is guarded</h2>
               </div>
             </div>
             <p className="empty-note">
-              Tenant and workspace deletion is intentionally not exposed in the MVP. Add archive, export, last-owner checks,
-              audit logging, and typed confirmation before destructive controls go live.
+              Owners and admins can delete inactive workspaces from the tenant workspace list. You must switch away from
+              a workspace before deleting it, type its exact name, and keep at least one workspace in the tenant.
             </p>
           </section>
         </aside>
