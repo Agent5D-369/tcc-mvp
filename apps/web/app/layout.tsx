@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Multitenant command center for projects, tasks, meetings, and decisions.",
 };
 
-const allowedThemes = new Set(["sage", "graphite", "indigo", "ember"]);
+const allowedThemes = new Set(["sage", "graphite", "midnight", "ember"]);
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   const cookieStore = await cookies();

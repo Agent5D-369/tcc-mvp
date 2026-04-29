@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { CreateTaskCard } from "./create-task-card";
 import { TasksReviewList } from "./tasks-review-list";
-import { getWorkspaceTaskStatuses, getWorkspaceTasksIndex } from "../workspace-screen-data";
+import { getWorkspaceProjectsIndex, getWorkspaceTaskStatuses, getWorkspaceTasksIndex } from "../workspace-screen-data";
 
 type PageProps = {
   params: Promise<{ tenantSlug: string; workspaceSlug: string }>;
@@ -67,14 +68,20 @@ export default async function TasksPage({ params, searchParams }: PageProps) {
     redirect(`/${activeRoute.tenantSlug}/${activeRoute.workspaceSlug}/tasks`);
   }
 
-  const tasks = await getWorkspaceTasksIndex({
-    tenantId: session.activeTenantId,
-    workspaceId: session.activeWorkspaceId,
-  });
-  const statuses = await getWorkspaceTaskStatuses({
-    tenantId: session.activeTenantId,
-    workspaceId: session.activeWorkspaceId,
-  });
+  const [tasks, statuses, projects] = await Promise.all([
+    getWorkspaceTasksIndex({
+      tenantId: session.activeTenantId,
+      workspaceId: session.activeWorkspaceId,
+    }),
+    getWorkspaceTaskStatuses({
+      tenantId: session.activeTenantId,
+      workspaceId: session.activeWorkspaceId,
+    }),
+    getWorkspaceProjectsIndex({
+      tenantId: session.activeTenantId,
+      workspaceId: session.activeWorkspaceId,
+    }),
+  ]);
   const activeFilter = taskFilters.some((item) => item.id === query.filter) ? query.filter! : "all";
   const filteredTasks = tasks.filter(getTaskFilterMatcher(activeFilter));
 
@@ -90,39 +97,65 @@ export default async function TasksPage({ params, searchParams }: PageProps) {
         </div>
       </section>
 
-      <section className="card filter-card">
-        <div className="card-header-row">
-          <div>
-            <h2>Choose a queue</h2>
-            <p className="empty-note">Use one filter at a time to reduce scan load on mobile.</p>
-          </div>
-        </div>
-        <div className="filter-chip-row">
-          {taskFilters.map((filter) => {
-            const href =
-              filter.id === "all"
-                ? `/${route.tenantSlug}/${route.workspaceSlug}/tasks`
-                : `/${route.tenantSlug}/${route.workspaceSlug}/tasks?filter=${filter.id}`;
+      <section className="dashboard-grid task-workspace-grid">
+        <div className="stack">
+          <section className="card filter-card">
+            <div className="card-header-row">
+              <div>
+                <h2>Choose a queue</h2>
+                <p className="empty-note">Use one filter at a time to reduce scan load on mobile.</p>
+              </div>
+            </div>
+            <div className="filter-chip-row">
+              {taskFilters.map((filter) => {
+                const href =
+                  filter.id === "all"
+                    ? `/${route.tenantSlug}/${route.workspaceSlug}/tasks`
+                    : `/${route.tenantSlug}/${route.workspaceSlug}/tasks?filter=${filter.id}`;
 
-            return (
-              <a
-                key={filter.id}
-                href={href}
-                className={activeFilter === filter.id ? "filter-chip is-active" : "filter-chip"}
-              >
-                {filter.label}
-              </a>
-            );
-          })}
+                return (
+                  <a
+                    key={filter.id}
+                    href={href}
+                    className={activeFilter === filter.id ? "filter-chip is-active" : "filter-chip"}
+                  >
+                    {filter.label}
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+
+          <TasksReviewList
+            tenantSlug={route.tenantSlug}
+            workspaceSlug={route.workspaceSlug}
+            tasks={filteredTasks}
+            statuses={statuses}
+          />
         </div>
+
+        <aside className="stack">
+          <CreateTaskCard
+            tenantSlug={route.tenantSlug}
+            workspaceSlug={route.workspaceSlug}
+            projects={projects.map((project) => ({
+              id: project.id,
+              name: project.name,
+              slug: project.slug,
+            }))}
+          />
+          <section className="card">
+            <h2>Workspace scope</h2>
+            <p className="empty-note">
+              Tasks shown here belong to the active workspace only. If seeded tasks appear in a new client space, they were created inside that workspace earlier and are not cross-workspace leakage.
+            </p>
+            <div className="meta-row spaced-action-row">
+              <span className="badge badge-neutral">Tenant: {route.tenantSlug}</span>
+              <span className="badge badge-neutral">Workspace: {route.workspaceSlug}</span>
+            </div>
+          </section>
+        </aside>
       </section>
-
-      <TasksReviewList
-        tenantSlug={route.tenantSlug}
-        workspaceSlug={route.workspaceSlug}
-        tasks={filteredTasks}
-        statuses={statuses}
-      />
     </main>
   );
 }

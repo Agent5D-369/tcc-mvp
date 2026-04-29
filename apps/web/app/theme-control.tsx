@@ -4,10 +4,10 @@ import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 
 const themes = [
-  { value: "sage", label: "Sage", swatch: "#0f766e" },
-  { value: "graphite", label: "Graphite", swatch: "#475569" },
-  { value: "indigo", label: "Indigo", swatch: "#4f46e5" },
-  { value: "ember", label: "Ember", swatch: "#b45309" },
+  { value: "sage", label: "Sage Light", swatch: "#0f766e" },
+  { value: "graphite", label: "Graphite Light", swatch: "#475569" },
+  { value: "midnight", label: "Midnight", swatch: "#60a5fa" },
+  { value: "ember", label: "Ember Dark", swatch: "#f59e0b" },
 ] as const;
 
 type ThemeName = typeof themes[number]["value"];
@@ -37,7 +37,7 @@ export function ThemeControl() {
 
   return (
     <div className="theme-control" aria-label="Color theme">
-      <span className="field-label">Theme</span>
+      <span className="field-label">Color theme</span>
       <div className="theme-swatch-row" role="radiogroup" aria-label="Choose color theme">
         {themes.map((item) => (
           <button

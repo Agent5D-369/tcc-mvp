@@ -5,7 +5,6 @@ import { getWorkspaceShellData } from "./workspace-screen-data";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { WorkspaceFeedbackProvider } from "./workspace-feedback";
 import { WorkspaceSwitcher } from "./workspace-switcher";
-import { ThemeControl } from "../../../theme-control";
 
 type LayoutProps = {
   children: ReactNode;
@@ -47,7 +46,6 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
               role: context.role,
             }))}
           />
-          <ThemeControl />
         </header>
         <div className="workspace-content">{children}</div>
         <MobileBottomNav tenantSlug={route.tenantSlug} workspaceSlug={route.workspaceSlug} />

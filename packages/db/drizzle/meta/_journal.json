@@ -36,6 +36,13 @@
       "when": 1777478400000,
       "tag": "0004_demo_workflow_polish",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777482000000,
+      "tag": "0005_retire_legacy_seed_tasks",
+      "breakpoints": true
     }
   ]
 }

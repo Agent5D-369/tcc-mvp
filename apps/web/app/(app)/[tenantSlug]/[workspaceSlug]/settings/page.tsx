@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession, getWorkspaceLimitForPlan, listWorkspaceMembers } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { ThemeControl } from "../../../../theme-control";
 import { CreateTenantCard } from "./create-tenant-card";
 import { CreateWorkspaceCard } from "./create-workspace-card";
 import { WorkspaceSettingsCard } from "./workspace-settings-card";
@@ -158,6 +159,18 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
 
         <aside className="stack">
+          <section className="card">
+            <div className="section-heading">
+              <div>
+                <div className="kicker">Appearance</div>
+                <h2 className="section-title">Choose a workspace theme</h2>
+              </div>
+            </div>
+            <p className="empty-note">
+              Pick a full interface theme. Your choice is saved for this browser and applied before the app renders.
+            </p>
+            <ThemeControl />
+          </section>
           <section className="card">
             <div className="section-heading">
               <div>
