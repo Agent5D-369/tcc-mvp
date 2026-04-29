@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       workspaceId: ctx.workspaceId,
     });
 
-    if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
+    if (!ctx.isPlatformAdmin && (!actorMembership || !["owner", "admin"].includes(actorMembership.role))) {
       return NextResponse.json({ error: "Only owners or admins can manage members" }, { status: 403 });
     }
 
@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Membership not found" }, { status: 404 });
     }
 
-    if (actorMembership.role !== "owner" && (targetMembership.role === "owner" || body.role === "owner")) {
+    if (!ctx.isPlatformAdmin && actorMembership?.role !== "owner" && (targetMembership.role === "owner" || body.role === "owner")) {
       return NextResponse.json({ error: "Only an owner can change owner roles" }, { status: 403 });
     }
 
@@ -97,7 +97,7 @@ export async function DELETE(_: NextRequest, { params }: RouteParams) {
       workspaceId: ctx.workspaceId,
     });
 
-    if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
+    if (!ctx.isPlatformAdmin && (!actorMembership || !["owner", "admin"].includes(actorMembership.role))) {
       return NextResponse.json({ error: "Only owners or admins can manage members" }, { status: 403 });
     }
 
@@ -123,7 +123,7 @@ export async function DELETE(_: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Self-removal is not available from this screen yet" }, { status: 400 });
     }
 
-    if (actorMembership.role !== "owner" && targetMembership.role === "owner") {
+    if (!ctx.isPlatformAdmin && actorMembership?.role !== "owner" && targetMembership.role === "owner") {
       return NextResponse.json({ error: "Only an owner can remove another owner" }, { status: 403 });
     }
 

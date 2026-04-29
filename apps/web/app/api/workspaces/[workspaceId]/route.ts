@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: RouteProps) {
       workspaceId: ctx.workspaceId,
     });
 
-    if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
+    if (!ctx.isPlatformAdmin && (!actorMembership || !["owner", "admin"].includes(actorMembership.role))) {
       return NextResponse.json({ error: "Only owners or admins can edit workspace details" }, { status: 403 });
     }
 
@@ -80,7 +80,7 @@ export async function DELETE(_: NextRequest, { params }: RouteProps) {
       workspaceId: ctx.workspaceId,
     });
 
-    if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
+    if (!ctx.isPlatformAdmin && (!actorMembership || !["owner", "admin"].includes(actorMembership.role))) {
       return NextResponse.json({ error: "Only owners or admins can delete workspaces" }, { status: 403 });
     }
 

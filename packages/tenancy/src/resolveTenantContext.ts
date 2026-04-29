@@ -22,7 +22,8 @@ export async function resolveTenantContext() {
     userEmail: session.user.email?.toLowerCase() ?? "",
     tenantId: session.activeTenantId,
     workspaceId: session.activeWorkspaceId,
-    role: membership.role,
+    role: session.isPlatformAdmin ? "owner" : membership.role,
     isDemoUser: session.user.email?.toLowerCase() === "demo@example.com",
+    isPlatformAdmin: session.isPlatformAdmin === true,
   };
 }

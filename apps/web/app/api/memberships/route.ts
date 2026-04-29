@@ -21,13 +21,13 @@ export async function POST(req: NextRequest) {
       workspaceId: ctx.workspaceId,
     });
 
-    if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
+    if (!ctx.isPlatformAdmin && (!actorMembership || !["owner", "admin"].includes(actorMembership.role))) {
       return NextResponse.json({ error: "Only owners or admins can manage members" }, { status: 403 });
     }
 
     const body = createMembershipSchema.parse(await req.json());
 
-    if (actorMembership.role !== "owner" && body.role === "owner") {
+    if (!ctx.isPlatformAdmin && actorMembership?.role !== "owner" && body.role === "owner") {
       return NextResponse.json({ error: "Only an owner can add another owner" }, { status: 403 });
     }
 

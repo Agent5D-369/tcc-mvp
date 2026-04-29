@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
-import { resolveMembershipByEmail } from "@workspace-kit/auth/membership";
+import { ensureUserWorkspaceMembership, resolveMembershipByEmail } from "@workspace-kit/auth/membership";
 import { clearDemoSessionCookie, createDemoSessionToken, setDemoSessionCookie } from "@workspace-kit/auth/demoSession";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { recordAuditEvent } from "@workspace-kit/tenancy/audit";
+import { isPlatformAdminEmail } from "@workspace-kit/auth/platformAdmin";
 
 const demoSessionSchema = z.object({
   email: z.string().email(),
@@ -17,11 +18,12 @@ export async function POST(req: NextRequest) {
     console.log("[demo-session] request received");
     const body = demoSessionSchema.parse(await req.json());
     const email = body.email.trim().toLowerCase();
-    if (email !== "demo@example.com") {
+    const isPlatformAdmin = isPlatformAdminEmail(email);
+    if (email !== "demo@example.com" && !isPlatformAdmin) {
       return NextResponse.json({ error: "Demo access is limited to demo@example.com" }, { status: 403 });
     }
 
-    const name = "Team Command Center Demo User";
+    const name = isPlatformAdmin ? body.name.trim() : "Team Command Center Demo User";
 
     const [user] = await db
       .insert(schema.users)
@@ -44,43 +46,47 @@ export async function POST(req: NextRequest) {
 
     console.log("[demo-session] user upserted", { userId: user?.id, email });
 
-    const [demoWorkspace] = await db
-      .select({
-        tenantId: schema.tenants.id,
-        workspaceId: schema.workspaces.id,
-      })
-      .from(schema.workspaces)
-      .innerJoin(schema.tenants, eq(schema.tenants.id, schema.workspaces.tenantId))
-      .where(and(
-        eq(schema.tenants.slug, "quicklaunch-team-command-center"),
-        eq(schema.workspaces.slug, "command-center-demo"),
-      ))
-      .limit(1);
+    if (isPlatformAdmin) {
+      await ensureUserWorkspaceMembership({ userId: user.id });
+    } else {
+      const [demoWorkspace] = await db
+        .select({
+          tenantId: schema.tenants.id,
+          workspaceId: schema.workspaces.id,
+        })
+        .from(schema.workspaces)
+        .innerJoin(schema.tenants, eq(schema.tenants.id, schema.workspaces.tenantId))
+        .where(and(
+          eq(schema.tenants.slug, "quicklaunch-team-command-center"),
+          eq(schema.workspaces.slug, "command-center-demo"),
+        ))
+        .limit(1);
 
-    if (!demoWorkspace) {
-      return NextResponse.json({ error: "Demo workspace is not seeded" }, { status: 500 });
-    }
+      if (!demoWorkspace) {
+        return NextResponse.json({ error: "Demo workspace is not seeded" }, { status: 500 });
+      }
 
-    await db
-      .insert(schema.memberships)
-      .values({
-        tenantId: demoWorkspace.tenantId,
-        workspaceId: demoWorkspace.workspaceId,
-        userId: user.id,
-        role: "manager",
-        isDefaultWorkspace: true,
-      })
-      .onConflictDoUpdate({
-        target: [schema.memberships.tenantId, schema.memberships.workspaceId, schema.memberships.userId],
-        set: {
+      await db
+        .insert(schema.memberships)
+        .values({
+          tenantId: demoWorkspace.tenantId,
+          workspaceId: demoWorkspace.workspaceId,
+          userId: user.id,
           role: "manager",
           isDefaultWorkspace: true,
-        },
-      });
-    console.log("[demo-session] demo membership ensured", { userId: user.id });
+        })
+        .onConflictDoUpdate({
+          target: [schema.memberships.tenantId, schema.memberships.workspaceId, schema.memberships.userId],
+          set: {
+            role: "manager",
+            isDefaultWorkspace: true,
+          },
+        });
+      console.log("[demo-session] demo membership ensured", { userId: user.id });
+    }
 
     const membership = await resolveMembershipByEmail(email);
-    if (!membership?.workspaceId || membership.workspaceId !== demoWorkspace.workspaceId) {
+    if (!membership?.workspaceId) {
       console.error("[demo-session] membership lookup returned no workspace", { email });
       return NextResponse.json({ error: "No workspace membership available" }, { status: 500 });
     }

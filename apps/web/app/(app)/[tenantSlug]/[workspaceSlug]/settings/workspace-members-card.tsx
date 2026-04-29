@@ -44,6 +44,7 @@ export function WorkspaceMembersCard({
     Object.fromEntries(members.map((member) => [member.membershipId, member.role])),
   );
   const [isSaving, setIsSaving] = useState<string | null>(null);
+  const [editingMembershipId, setEditingMembershipId] = useState<string | null>(null);
 
   const roleByMembership = useMemo(
     () => Object.fromEntries(members.map((member) => [member.membershipId, member.role])),
@@ -100,6 +101,7 @@ export function WorkspaceMembersCard({
     }
 
     pushToast("Role updated");
+    setEditingMembershipId(null);
     router.refresh();
   }
 
@@ -171,6 +173,7 @@ export function WorkspaceMembersCard({
           const draftRole = draftRoles[member.membershipId] ?? member.role;
           const roleChanged = draftRole !== roleByMembership[member.membershipId];
           const isCurrentUser = member.userId === currentUserId;
+          const isEditing = editingMembershipId === member.membershipId;
 
           return (
             <article key={member.membershipId} className="record-card compact-record-card">
@@ -188,43 +191,54 @@ export function WorkspaceMembersCard({
 
               {canManage ? (
                 <div className="record-card-actions admin-inline-actions">
-                  <label>
-                    <span className="field-label">Role</span>
-                    <select
-                      value={draftRole}
-                      onChange={(event) => setDraftRoles((current) => ({
-                        ...current,
-                        [member.membershipId]: event.target.value,
-                      }))}
-                    >
-                      {roleOptions
-                        .filter((option) => currentUserRole === "owner" || option.value !== "owner")
-                        .map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
-
-                  <div className="meta-row">
+                  {isEditing ? (
+                    <>
+                      <label>
+                        <span className="field-label">Role</span>
+                        <select
+                          value={draftRole}
+                          onChange={(event) => setDraftRoles((current) => ({
+                            ...current,
+                            [member.membershipId]: event.target.value,
+                          }))}
+                        >
+                          {roleOptions
+                            .filter((option) => currentUserRole === "owner" || option.value !== "owner")
+                            .map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                      <div className="meta-row">
+                        <button
+                          className="button-secondary"
+                          type="button"
+                          disabled={!roleChanged || isSaving === member.membershipId}
+                          onClick={() => void updateRole(member.membershipId)}
+                        >
+                          {isSaving === member.membershipId ? "Saving..." : "Update"}
+                        </button>
+                        <button
+                          className="button-secondary button-danger"
+                          type="button"
+                          disabled={isCurrentUser || isSaving === `delete-${member.membershipId}`}
+                          onClick={() => void removeMember(member.membershipId)}
+                        >
+                          {isSaving === `delete-${member.membershipId}` ? "Removing..." : "Remove"}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
                     <button
                       className="button-secondary"
                       type="button"
-                      disabled={!roleChanged || isSaving === member.membershipId}
-                      onClick={() => void updateRole(member.membershipId)}
+                      onClick={() => setEditingMembershipId(member.membershipId)}
                     >
-                      {isSaving === member.membershipId ? "Saving..." : "Update"}
+                      Edit role
                     </button>
-                    <button
-                      className="button-secondary button-danger"
-                      type="button"
-                      disabled={isCurrentUser || isSaving === `delete-${member.membershipId}`}
-                      onClick={() => void removeMember(member.membershipId)}
-                    >
-                      {isSaving === `delete-${member.membershipId}` ? "Removing..." : "Remove"}
-                    </button>
-                  </div>
+                  )}
                 </div>
               ) : null}
             </article>

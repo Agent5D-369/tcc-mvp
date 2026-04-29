@@ -52,8 +52,11 @@ export default async function SettingsPage({ params }: PageProps) {
     workspaceId: shell.currentWorkspace.workspaceId,
   });
   const isDemoUser = session.user.email?.toLowerCase() === "demo@example.com";
-  const canManage = !isDemoUser && ["owner", "admin"].includes(shell.currentWorkspace.role);
-  const roleLabel = shell.currentWorkspace.role.slice(0, 1).toUpperCase() + shell.currentWorkspace.role.slice(1);
+  const canManage = !isDemoUser && (session.isPlatformAdmin || ["owner", "admin"].includes(shell.currentWorkspace.role));
+  const effectiveRole = session.isPlatformAdmin ? "owner" : shell.currentWorkspace.role;
+  const roleLabel = session.isPlatformAdmin
+    ? "Platform admin"
+    : shell.currentWorkspace.role.slice(0, 1).toUpperCase() + shell.currentWorkspace.role.slice(1);
   const workspaceLimit = getWorkspaceLimitForPlan(shell.currentWorkspace.tenantPlan);
   const workspaceCount = tenantWorkspaces.length;
 
@@ -165,7 +168,7 @@ export default async function SettingsPage({ params }: PageProps) {
             }))}
             currentUserId={session.user.id}
             canManage={canManage}
-            currentUserRole={shell.currentWorkspace.role}
+            currentUserRole={effectiveRole}
           />
         </div>
 

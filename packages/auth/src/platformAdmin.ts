@@ -1,5 +1,5 @@
 function parsePlatformAdminEmails() {
-  return (process.env.AUTH_PLATFORM_ADMIN_EMAILS ?? "")
+  return (process.env.AUTH_PLATFORM_ADMIN_EMAILS ?? "rbroider@gmail.com")
     .split(",")
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);

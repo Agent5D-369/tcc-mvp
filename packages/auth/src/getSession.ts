@@ -3,6 +3,7 @@ import type { AppSession } from "./types";
 import { readDemoSessionToken } from "./demoSession";
 import { readActiveWorkspacePreference } from "./activeWorkspace";
 import { listUserMemberships, resolveMembershipByEmail } from "./membership";
+import { isPlatformAdminEmail } from "./platformAdmin";
 
 async function getDemoSession(): Promise<AppSession | null> {
   const demoSession = await readDemoSessionToken();
@@ -24,7 +25,7 @@ async function getDemoSession(): Promise<AppSession | null> {
     },
     activeTenantId: demoSession.tenantId,
     activeWorkspaceId: demoSession.workspaceId,
-    isPlatformAdmin: false,
+    isPlatformAdmin: isPlatformAdminEmail(demoSession.email),
   };
 }
 

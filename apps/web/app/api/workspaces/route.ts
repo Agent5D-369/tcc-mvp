@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       workspaceId: ctx.workspaceId,
     });
 
-    if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
+    if (!ctx.isPlatformAdmin && (!actorMembership || !["owner", "admin"].includes(actorMembership.role))) {
       return NextResponse.json({ error: "Only owners or admins can create workspaces" }, { status: 403 });
     }
 
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       userId: ctx.userId,
       workspaceName: body.workspaceName,
       workspaceDescription: body.workspaceDescription,
-      creatorRole: actorMembership.role,
+      creatorRole: ctx.isPlatformAdmin ? "owner" : actorMembership?.role ?? "admin",
     });
 
     await setActiveWorkspacePreference({
