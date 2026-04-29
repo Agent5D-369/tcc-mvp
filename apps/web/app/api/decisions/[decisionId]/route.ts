@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertCanEditWorkspace } from "@workspace-kit/tenancy/permissions";
 
 const updateDecisionSchema = z.object({
   title: z.string().trim().min(1).max(160).optional(),
@@ -18,6 +19,7 @@ type RouteParams = {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await resolveTenantContext();
+    assertCanEditWorkspace(ctx);
     const { decisionId } = await params;
     const body = updateDecisionSchema.parse(await req.json());
 
@@ -83,6 +85,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(_: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await resolveTenantContext();
+    assertCanEditWorkspace(ctx);
     const { decisionId } = await params;
 
     const [decision] = await db

@@ -9,6 +9,7 @@ import {
 } from "@workspace-kit/auth";
 import { db, schema } from "@workspace-kit/db";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertNotDemoUser } from "@workspace-kit/tenancy/permissions";
 
 const membershipRoleSchema = z.enum(["owner", "admin", "manager", "member", "guest"]);
 
@@ -23,6 +24,7 @@ type RouteParams = {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await resolveTenantContext();
+    assertNotDemoUser(ctx);
     const { membershipId } = await params;
     const actorMembership = await resolveMembershipByWorkspace({
       userId: ctx.userId,
@@ -87,6 +89,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(_: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await resolveTenantContext();
+    assertNotDemoUser(ctx);
     const { membershipId } = await params;
     const actorMembership = await resolveMembershipByWorkspace({
       userId: ctx.userId,

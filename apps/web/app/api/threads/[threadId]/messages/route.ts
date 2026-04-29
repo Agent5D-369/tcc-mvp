@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
 import { completeThreadMessage } from "@workspace-kit/ai-core";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertCanEditWorkspace } from "@workspace-kit/tenancy/permissions";
 
 const createMessageSchema = z.object({
   content: z.string().min(1),
@@ -55,6 +56,7 @@ export async function GET(_: NextRequest, { params }: RouteParams) {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await resolveTenantContext();
+    assertCanEditWorkspace(ctx);
     const { threadId } = await params;
     const body = createMessageSchema.parse(await req.json());
 

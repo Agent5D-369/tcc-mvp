@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertCanEditWorkspace } from "@workspace-kit/tenancy/permissions";
 
 function normalizeSlug(value: string) {
   return value
@@ -44,6 +45,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await resolveTenantContext();
+    assertCanEditWorkspace(ctx);
     const body = createProjectSchema.parse(await req.json());
     const slug = normalizeSlug(body.slug || body.name);
 

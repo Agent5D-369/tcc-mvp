@@ -72,3 +72,20 @@ export const memberships = pgTable("memberships", {
   membershipIdx: uniqueIndex("memberships_unique").on(t.tenantId, t.workspaceId, t.userId),
   userIdx: index("memberships_user_idx").on(t.userId),
 }));
+
+export const auditEvents = pgTable("audit_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").references(() => workspaces.id, { onDelete: "set null" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  action: varchar("action", { length: 120 }).notNull(),
+  entityType: varchar("entity_type", { length: 80 }),
+  entityId: uuid("entity_id"),
+  metadataJson: jsonb("metadata_json").$type<Record<string, unknown>>().default({}).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("audit_events_tenant_idx").on(t.tenantId),
+  workspaceIdx: index("audit_events_workspace_idx").on(t.workspaceId),
+  userIdx: index("audit_events_user_idx").on(t.userId),
+  actionIdx: index("audit_events_action_idx").on(t.action),
+}));

@@ -39,7 +39,11 @@ export default async function AgentsSettingsPage({ params }: PageProps) {
     tenantId: session.activeTenantId,
     workspaceId: session.activeWorkspaceId,
   });
-  const canManage = Boolean(actorMembership && ["owner", "admin"].includes(actorMembership.role));
+  const canManage = Boolean(
+    session.user.email?.toLowerCase() !== "demo@example.com"
+    && actorMembership
+    && ["owner", "admin"].includes(actorMembership.role),
+  );
   const agents = await listAgentDefinitions({
     tenantId: session.activeTenantId,
     workspaceId: session.activeWorkspaceId,

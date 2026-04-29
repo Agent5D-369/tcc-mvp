@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listAgentDefinitions, upsertAgentDefinition } from "@workspace-kit/ai-core";
-import { resolveMembershipByWorkspace } from "@workspace-kit/auth";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertCanAdminWorkspace, assertNotDemoUser } from "@workspace-kit/tenancy/permissions";
 
 const surfaceSchema = z.enum(["capture", "thread", "project", "task", "memory", "meeting"]);
 
@@ -18,15 +18,8 @@ const agentSchema = z.object({
 
 async function requireAgentAdmin() {
   const ctx = await resolveTenantContext();
-  const actorMembership = await resolveMembershipByWorkspace({
-    userId: ctx.userId,
-    tenantId: ctx.tenantId,
-    workspaceId: ctx.workspaceId,
-  });
-
-  if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
-    throw new Error("Only owners and admins can manage agents");
-  }
+  assertNotDemoUser(ctx);
+  assertCanAdminWorkspace(ctx);
 
   return ctx;
 }

@@ -5,6 +5,7 @@ import {
   updateWorkspaceDetails,
 } from "@workspace-kit/auth";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertNotDemoUser } from "@workspace-kit/tenancy/permissions";
 
 const updateWorkspaceSchema = z.object({
   workspaceName: z.string().trim().min(2).max(120),
@@ -18,6 +19,7 @@ type RouteProps = {
 export async function PATCH(req: NextRequest, { params }: RouteProps) {
   try {
     const ctx = await resolveTenantContext();
+    assertNotDemoUser(ctx);
     const { workspaceId } = await params;
 
     if (workspaceId !== ctx.workspaceId) {

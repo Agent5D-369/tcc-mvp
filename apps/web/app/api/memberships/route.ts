@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { addWorkspaceMemberByEmail, resolveMembershipByWorkspace } from "@workspace-kit/auth";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertNotDemoUser } from "@workspace-kit/tenancy/permissions";
 
 const membershipRoleSchema = z.enum(["owner", "admin", "manager", "member", "guest"]);
 
@@ -13,6 +14,7 @@ const createMembershipSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const ctx = await resolveTenantContext();
+    assertNotDemoUser(ctx);
     const actorMembership = await resolveMembershipByWorkspace({
       userId: ctx.userId,
       tenantId: ctx.tenantId,

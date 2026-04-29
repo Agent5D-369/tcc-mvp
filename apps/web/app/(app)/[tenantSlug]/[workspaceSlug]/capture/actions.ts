@@ -1,13 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getSession } from "@workspace-kit/auth";
+import { getSession, resolveMembershipByWorkspace } from "@workspace-kit/auth";
 import {
   type CaptureSourceKind,
   createInteractionCapture,
   extractInteractionProposals,
   getCaptureContext,
 } from "@workspace-kit/capture";
+import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
+import { assertCanEditWorkspace } from "@workspace-kit/tenancy/permissions";
 
 const allowedSourceKinds = new Set([
   "meeting_transcript",
@@ -18,15 +20,42 @@ const allowedSourceKinds = new Set([
   "other",
 ]);
 
+async function requireWritableActiveRoute(route: { tenantSlug: string; workspaceSlug: string }) {
+  const session = await getSession();
+
+  if (!session?.activeTenantId || !session.user.id || !session.activeWorkspaceId) {
+    redirect("/signin");
+  }
+
+  const activeRoute = await getActiveWorkspaceRoute({
+    tenantId: session.activeTenantId,
+    workspaceId: session.activeWorkspaceId,
+  });
+
+  if (!activeRoute || activeRoute.tenantSlug !== route.tenantSlug || activeRoute.workspaceSlug !== route.workspaceSlug) {
+    redirect(activeRoute ? `/${activeRoute.tenantSlug}/${activeRoute.workspaceSlug}/capture` : "/onboarding");
+  }
+
+  const membership = await resolveMembershipByWorkspace({
+    userId: session.user.id,
+    tenantId: session.activeTenantId,
+    workspaceId: session.activeWorkspaceId,
+  });
+
+  assertCanEditWorkspace({ role: membership?.role ?? "guest" });
+
+  return {
+    userId: session.user.id,
+    tenantId: session.activeTenantId!,
+    workspaceId: session.activeWorkspaceId!,
+  };
+}
+
 export async function createCaptureAction(
   route: { tenantSlug: string; workspaceSlug: string },
   formData: FormData,
 ) {
-  const session = await getSession();
-
-  if (!session?.activeTenantId || !session.user.id) {
-    redirect("/signin");
-  }
+  const session = await requireWritableActiveRoute(route);
 
   const title = formData.get("title")?.toString().trim();
   const sourceKindValue = formData.get("sourceKind")?.toString().trim();
@@ -41,14 +70,14 @@ export async function createCaptureAction(
   }
 
   const context = await getCaptureContext({
-    tenantId: session.activeTenantId,
+    tenantId: session.tenantId,
     workspaceSlug: route.workspaceSlug,
   });
 
   const interaction = await createInteractionCapture({
-    tenantId: session.activeTenantId,
+    tenantId: session.tenantId,
     workspaceId: context.workspace.id,
-    userId: session.user.id,
+    userId: session.userId,
     title,
     sourceKind: sourceKindValue as CaptureSourceKind,
     projectId: projectId || null,
@@ -65,11 +94,7 @@ export async function extractCaptureAction(
   route: { tenantSlug: string; workspaceSlug: string },
   formData: FormData,
 ) {
-  const session = await getSession();
-
-  if (!session?.activeTenantId || !session.user.id || !session.activeWorkspaceId) {
-    redirect("/signin");
-  }
+  const session = await requireWritableActiveRoute(route);
 
   const interactionId = formData.get("interactionId")?.toString().trim();
   if (!interactionId) {
@@ -77,9 +102,9 @@ export async function extractCaptureAction(
   }
 
   const proposals = await extractInteractionProposals({
-    tenantId: session.activeTenantId,
-    workspaceId: session.activeWorkspaceId,
-    userId: session.user.id,
+    tenantId: session.tenantId,
+    workspaceId: session.workspaceId,
+    userId: session.userId,
     interactionId,
     agentId: formData.get("agentId")?.toString().trim() || null,
   });

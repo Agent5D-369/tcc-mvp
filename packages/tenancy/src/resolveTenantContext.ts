@@ -1,4 +1,5 @@
 import { requireAuth } from "@workspace-kit/auth/requireAuth";
+import { resolveMembershipByWorkspace } from "@workspace-kit/auth/membership";
 
 export async function resolveTenantContext() {
   const session = await requireAuth();
@@ -6,9 +7,22 @@ export async function resolveTenantContext() {
     throw new Error("No active tenant or workspace found for this user");
   }
 
-  return {
+  const membership = await resolveMembershipByWorkspace({
     userId: session.user.id,
     tenantId: session.activeTenantId,
     workspaceId: session.activeWorkspaceId,
+  });
+
+  if (!membership) {
+    throw new Error("No active workspace membership found for this user");
+  }
+
+  return {
+    userId: session.user.id,
+    userEmail: session.user.email?.toLowerCase() ?? "",
+    tenantId: session.activeTenantId,
+    workspaceId: session.activeWorkspaceId,
+    role: membership.role,
+    isDemoUser: session.user.email?.toLowerCase() === "demo@example.com",
   };
 }

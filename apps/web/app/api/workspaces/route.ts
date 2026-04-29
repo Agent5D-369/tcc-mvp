@@ -6,6 +6,7 @@ import {
   setActiveWorkspacePreference,
 } from "@workspace-kit/auth";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertNotDemoUser } from "@workspace-kit/tenancy/permissions";
 
 const createWorkspaceSchema = z.object({
   workspaceName: z.string().trim().min(2).max(120),
@@ -15,6 +16,7 @@ const createWorkspaceSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const ctx = await resolveTenantContext();
+    assertNotDemoUser(ctx);
     const actorMembership = await resolveMembershipByWorkspace({
       userId: ctx.userId,
       tenantId: ctx.tenantId,

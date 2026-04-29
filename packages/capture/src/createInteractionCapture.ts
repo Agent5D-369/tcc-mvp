@@ -1,6 +1,7 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { createOpenRouterChat, resolveTenantOpenRouterKey } from "@workspace-kit/ai-core";
 import { db, schema } from "@workspace-kit/db";
+import { recordAuditEvent } from "@workspace-kit/tenancy/audit";
 
 const sourceTypeMap = {
   meeting_transcript: "meeting",
@@ -87,6 +88,38 @@ export async function createInteractionCapture(args: {
   participants?: string | null;
   rawContent: string;
 }) {
+  if (args.projectId) {
+    const [project] = await db
+      .select({ id: schema.projects.id })
+      .from(schema.projects)
+      .where(and(
+        eq(schema.projects.id, args.projectId),
+        eq(schema.projects.tenantId, args.tenantId),
+        eq(schema.projects.workspaceId, args.workspaceId),
+      ))
+      .limit(1);
+
+    if (!project) {
+      throw new Error("Project not found in this workspace");
+    }
+  }
+
+  if (args.queueId) {
+    const [queue] = await db
+      .select({ id: schema.queues.id })
+      .from(schema.queues)
+      .where(and(
+        eq(schema.queues.id, args.queueId),
+        eq(schema.queues.tenantId, args.tenantId),
+        eq(schema.queues.workspaceId, args.workspaceId),
+      ))
+      .limit(1);
+
+    if (!queue) {
+      throw new Error("Queue not found in this workspace");
+    }
+  }
+
   const sourceType = sourceTypeMap[args.sourceKind] ?? "manual";
   const sourceLabel = args.sourceKind.replace(/_/g, " ");
   const trimmedContent = args.rawContent.trim();
@@ -116,6 +149,20 @@ export async function createInteractionCapture(args: {
       },
     })
     .returning();
+
+  await recordAuditEvent({
+    tenantId: args.tenantId,
+    workspaceId: args.workspaceId,
+    userId: args.userId,
+    action: "capture.created",
+    entityType: "interaction",
+    entityId: interaction.id,
+    metadataJson: {
+      sourceKind: args.sourceKind,
+      projectId: args.projectId || null,
+      queueId: args.queueId || null,
+    },
+  });
 
   return interaction;
 }
@@ -313,6 +360,20 @@ export async function extractInteractionProposals(args: {
       .returning();
     inserted.push(row);
   }
+
+  await recordAuditEvent({
+    tenantId: args.tenantId,
+    workspaceId: args.workspaceId,
+    userId: args.userId,
+    action: "capture.extracted",
+    entityType: "interaction",
+    entityId: interaction.id,
+    metadataJson: {
+      proposalCount: inserted.length,
+      agentId: args.agentId || null,
+      usedFallback: !extracted?.length,
+    },
+  });
 
   return inserted;
 }

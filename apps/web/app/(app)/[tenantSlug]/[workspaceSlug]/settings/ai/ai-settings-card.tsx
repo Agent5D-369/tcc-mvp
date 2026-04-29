@@ -97,9 +97,9 @@ export function AiSettingsCard({ initialData, canManage }: AiSettingsCardProps) 
 
       <div className="list">
         <div className="list-row">
-          <strong>Usage this month</strong>
+          <strong>Estimated usage this month</strong>
           <div className="muted">
-            ${(initialData.usage.costCents / 100).toFixed(2)} of ${(initialData.usage.monthlyBudgetCents / 100).toFixed(2)} used ({budgetUsed}%)
+            ${(initialData.usage.costCents / 100).toFixed(2)} of ${(initialData.usage.monthlyBudgetCents / 100).toFixed(2)} tracked ({budgetUsed}%)
           </div>
         </div>
         <div className="list-row">
@@ -142,7 +142,7 @@ export function AiSettingsCard({ initialData, canManage }: AiSettingsCardProps) 
         </label>
 
         <label>
-          <span className="field-label">Monthly AI budget</span>
+          <span className="field-label">Monthly AI budget stop</span>
           <input
             value={monthlyBudgetDollars}
             disabled={!canManage}
@@ -176,6 +176,11 @@ export function AiSettingsCard({ initialData, canManage }: AiSettingsCardProps) 
         </label>
 
         {!canManage ? <p className="form-error">Only owners and admins can change AI settings.</p> : null}
+        {canManage ? (
+          <p className="empty-note">
+            TCC enforces this as an app-side stop when provider cost is logged. Max output tokens are the immediate per-run safety rail.
+          </p>
+        ) : null}
 
         <button className="button-primary" type="submit" disabled={!canManage || isSaving}>
           {isSaving ? "Saving..." : "Save AI settings"}

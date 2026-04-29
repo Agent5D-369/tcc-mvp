@@ -50,7 +50,8 @@ export default async function SettingsPage({ params }: PageProps) {
     tenantId: shell.currentWorkspace.tenantId,
     workspaceId: shell.currentWorkspace.workspaceId,
   });
-  const canManage = ["owner", "admin"].includes(shell.currentWorkspace.role);
+  const isDemoUser = session.user.email?.toLowerCase() === "demo@example.com";
+  const canManage = !isDemoUser && ["owner", "admin"].includes(shell.currentWorkspace.role);
   const roleLabel = shell.currentWorkspace.role.slice(0, 1).toUpperCase() + shell.currentWorkspace.role.slice(1);
   const workspaceLimit = getWorkspaceLimitForPlan(shell.currentWorkspace.tenantPlan);
   const workspaceCount = tenantWorkspaces.length;

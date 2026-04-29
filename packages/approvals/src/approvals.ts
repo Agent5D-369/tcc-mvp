@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@workspace-kit/db";
+import { recordAuditEvent } from "@workspace-kit/tenancy/audit";
 
 type ProposalPatch = Record<string, unknown>;
 
@@ -293,6 +294,19 @@ export async function approveProposal(args: {
     .where(eq(schema.proposals.id, proposal.id))
     .returning();
 
+  await recordAuditEvent({
+    tenantId: args.tenantId,
+    workspaceId: args.workspaceId,
+    userId: args.userId,
+    action: "proposal.approved",
+    entityType: draft.targetType,
+    entityId: appliedEntityId,
+    metadataJson: {
+      proposalId: proposal.id,
+      targetType: draft.targetType,
+    },
+  });
+
   return updated;
 }
 
@@ -321,6 +335,15 @@ export async function rejectProposal(args: {
   if (!updated) {
     throw new Error("Pending proposal not found");
   }
+
+  await recordAuditEvent({
+    tenantId: args.tenantId,
+    workspaceId: args.workspaceId,
+    userId: args.userId,
+    action: "proposal.rejected",
+    entityType: "proposal",
+    entityId: updated.id,
+  });
 
   return updated;
 }

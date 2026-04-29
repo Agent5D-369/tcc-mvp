@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, schema } from "@workspace-kit/db";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertCanEditWorkspace } from "@workspace-kit/tenancy/permissions";
 
 const createThreadSchema = z.object({
   title: z.string().trim().min(2).max(160),
@@ -55,6 +56,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await resolveTenantContext();
+    assertCanEditWorkspace(ctx);
     const body = createThreadSchema.parse(await req.json());
 
     if (body.projectId) {

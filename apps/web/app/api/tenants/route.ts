@@ -14,6 +14,9 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.user.email?.toLowerCase() === "demo@example.com") {
+      return NextResponse.json({ error: "Demo access cannot create organizations" }, { status: 403 });
+    }
 
     const body = createTenantSchema.parse(await req.json());
     const created = await createTenantWorkspaceForUser({

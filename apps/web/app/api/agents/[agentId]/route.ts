@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { upsertAgentDefinition } from "@workspace-kit/ai-core";
-import { resolveMembershipByWorkspace } from "@workspace-kit/auth";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertCanAdminWorkspace, assertNotDemoUser } from "@workspace-kit/tenancy/permissions";
 
 const agentSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -20,15 +20,8 @@ type RouteParams = {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await resolveTenantContext();
-    const actorMembership = await resolveMembershipByWorkspace({
-      userId: ctx.userId,
-      tenantId: ctx.tenantId,
-      workspaceId: ctx.workspaceId,
-    });
-
-    if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
-      return NextResponse.json({ error: "Only owners and admins can manage agents" }, { status: 403 });
-    }
+    assertNotDemoUser(ctx);
+    assertCanAdminWorkspace(ctx);
 
     const { agentId } = await params;
     const body = agentSchema.parse(await req.json());

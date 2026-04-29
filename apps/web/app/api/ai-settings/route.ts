@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getTenantAiSettings, updateTenantAiSettings } from "@workspace-kit/ai-core";
-import { resolveMembershipByWorkspace } from "@workspace-kit/auth";
 import { resolveTenantContext } from "@workspace-kit/tenancy/resolveTenantContext";
+import { assertCanAdminWorkspace, assertNotDemoUser } from "@workspace-kit/tenancy/permissions";
+import { recordAuditEvent } from "@workspace-kit/tenancy/audit";
 
 const aiSettingsSchema = z.object({
   mode: z.enum(["managed", "byo_key", "disabled"]),
@@ -14,15 +15,8 @@ const aiSettingsSchema = z.object({
 
 async function requireAiAdmin() {
   const ctx = await resolveTenantContext();
-  const actorMembership = await resolveMembershipByWorkspace({
-    userId: ctx.userId,
-    tenantId: ctx.tenantId,
-    workspaceId: ctx.workspaceId,
-  });
-
-  if (!actorMembership || !["owner", "admin"].includes(actorMembership.role)) {
-    throw new Error("Only owners and admins can manage AI settings");
-  }
+  assertNotDemoUser(ctx);
+  assertCanAdminWorkspace(ctx);
 
   return ctx;
 }
@@ -52,6 +46,22 @@ export async function PATCH(req: NextRequest) {
       monthlyBudgetCents: body.monthlyBudgetCents,
       maxOutputTokens: body.maxOutputTokens,
       openRouterApiKey: body.openRouterApiKey,
+    });
+
+    await recordAuditEvent({
+      tenantId: ctx.tenantId,
+      workspaceId: ctx.workspaceId,
+      userId: ctx.userId,
+      action: "ai_settings.updated",
+      entityType: "tenant",
+      entityId: ctx.tenantId,
+      metadataJson: {
+        mode: body.mode,
+        defaultModel: body.defaultModel,
+        monthlyBudgetCents: body.monthlyBudgetCents,
+        maxOutputTokens: body.maxOutputTokens,
+        providerKeyChanged: Boolean(body.openRouterApiKey),
+      },
     });
 
     return NextResponse.json(settings);
