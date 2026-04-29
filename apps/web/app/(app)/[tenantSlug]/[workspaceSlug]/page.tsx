@@ -70,14 +70,14 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
       href: `${baseHref}/approvals`,
     },
     {
+      label: "Capture meeting",
+      detail: "Log meeting notes and link them to a project so outcomes stay visible.",
+      href: `${baseHref}/meetings`,
+    },
+    {
       label: "Open memory",
       detail: "See the compiled wiki layer that reduces repeated context setting.",
       href: `${baseHref}/knowledge`,
-    },
-    {
-      label: "Tune AI",
-      detail: "Review managed/BYO keys, budget, and Markdown agents.",
-      href: `${baseHref}/settings/agents`,
     },
     {
       label: "Use templates",
@@ -102,6 +102,9 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           <div className="hero-actions">
             <Link className="button-primary" href={data.metrics.blockedTasks > 0 ? `${taskBaseHref}?filter=blocked` : taskBaseHref}>
               {data.metrics.blockedTasks > 0 ? "Review blocked work" : "Review open tasks"}
+            </Link>
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/meetings`}>
+              Capture meeting
             </Link>
             <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/projects`}>
               Open project rooms

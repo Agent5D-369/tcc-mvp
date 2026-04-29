@@ -186,6 +186,11 @@ textarea {
   grid-column: 1 / -1;
 }
 
+.workspace-header-actions .sign-out-link {
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--border));
+  color: var(--danger);
+}
+
 .workspace-content {
   width: min(1200px, calc(100% - 20px));
   margin: 0 auto;
@@ -261,7 +266,7 @@ textarea {
   bottom: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   background: var(--nav-bg);
@@ -311,7 +316,7 @@ textarea {
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -1227,6 +1232,10 @@ textarea {
     grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.72fr);
     align-items: flex-end;
     padding: 14px 18px;
+  }
+
+  .workspace-header-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .theme-swatch-row {

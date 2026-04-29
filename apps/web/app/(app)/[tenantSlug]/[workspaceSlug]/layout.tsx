@@ -36,13 +36,16 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
             <p>{shell.currentWorkspace.workspaceDescription || "Run projects, tasks, meetings, and decisions from one command surface."}</p>
           </div>
           <div className="workspace-header-actions">
+            <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/meetings`}>
+              Meetings
+            </Link>
             <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/help`}>
               Help
             </Link>
             <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/templates`}>
               Templates
             </Link>
-            <a className="button-secondary" href="/api/auth/signout?callbackUrl=/signin">
+            <a className="button-secondary sign-out-link" href="/api/auth/signout?callbackUrl=/signin">
               Sign out
             </a>
             <WorkspaceSwitcher
