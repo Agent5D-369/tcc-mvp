@@ -81,6 +81,7 @@ export async function extractCaptureAction(
     workspaceId: session.activeWorkspaceId,
     userId: session.user.id,
     interactionId,
+    agentId: formData.get("agentId")?.toString().trim() || null,
   });
 
   redirect(`/${route.tenantSlug}/${route.workspaceSlug}/capture?captured=${interactionId}&extracted=${proposals.length}`);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { listAgentDefinitions } from "@workspace-kit/ai-core";
 import { getSession } from "@workspace-kit/auth";
 import { getCaptureContext } from "@workspace-kit/capture";
 import { createCaptureAction, extractCaptureAction } from "./actions";
@@ -30,6 +31,11 @@ export default async function CapturePage({ params, searchParams }: PageProps) {
   const data = await getCaptureContext({
     tenantId: session.activeTenantId,
     workspaceSlug: route.workspaceSlug,
+  });
+  const agents = await listAgentDefinitions({
+    tenantId: session.activeTenantId,
+    workspaceId: data.workspace.id,
+    surface: "capture",
   });
 
   const createCapture = createCaptureAction.bind(null, route);
@@ -78,6 +84,15 @@ export default async function CapturePage({ params, searchParams }: PageProps) {
           {!query.extracted ? (
             <form action={extractCapture}>
               <input name="interactionId" type="hidden" value={query.captured} />
+              <label>
+                <span className="field-label">Extraction agent</span>
+                <select name="agentId" defaultValue="">
+                  <option value="">Default extractor</option>
+                  {agents.filter((agent) => agent.isActive).map((agent) => (
+                    <option key={agent.id} value={agent.id}>{agent.name}</option>
+                  ))}
+                </select>
+              </label>
               <button className="button-secondary" type="submit">Extract proposals</button>
             </form>
           ) : null}

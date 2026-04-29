@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { listAgentDefinitions } from "@workspace-kit/ai-core";
 import { getSession } from "@workspace-kit/auth";
 import { getActiveWorkspaceRoute } from "@workspace-kit/tenancy/getActiveWorkspaceRoute";
 import { getWorkspaceProjectsIndex } from "../workspace-screen-data";
@@ -50,7 +51,7 @@ export default async function ThreadsPage({ params }: PageProps) {
     redirect(`/${activeRoute.tenantSlug}/${activeRoute.workspaceSlug}/threads`);
   }
 
-  const [threads, projects] = await Promise.all([
+  const [threads, projects, agents] = await Promise.all([
     getWorkspaceThreadsIndex({
       tenantId: session.activeTenantId,
       workspaceId: session.activeWorkspaceId,
@@ -58,6 +59,11 @@ export default async function ThreadsPage({ params }: PageProps) {
     getWorkspaceProjectsIndex({
       tenantId: session.activeTenantId,
       workspaceId: session.activeWorkspaceId,
+    }),
+    listAgentDefinitions({
+      tenantId: session.activeTenantId,
+      workspaceId: session.activeWorkspaceId,
+      surface: "thread",
     }),
   ]);
 
@@ -87,6 +93,7 @@ export default async function ThreadsPage({ params }: PageProps) {
                     </div>
                     <div className="entity-summary-meta">
                       <span>{thread.projectName || "No linked project"}</span>
+                      <span>{thread.agentName ? `Agent: ${thread.agentName}` : "No agent"}</span>
                       <span>{thread.messageCount} message{thread.messageCount === 1 ? "" : "s"}</span>
                       <span>{thread.updatedAt ? `Updated ${new Date(thread.updatedAt).toLocaleString()}` : "No activity yet"}</span>
                     </div>
@@ -121,6 +128,13 @@ export default async function ThreadsPage({ params }: PageProps) {
               name: project.name,
               slug: project.slug,
             }))}
+            agents={agents
+              .filter((agent) => agent.isActive)
+              .map((agent) => ({
+                id: agent.id,
+                name: agent.name,
+                description: agent.description,
+              }))}
           />
         </aside>
       </section>

@@ -13,6 +13,11 @@ type CreateThreadCardProps = {
     name: string;
     slug: string;
   }>;
+  agents?: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+  }>;
   defaultProjectId?: string | null;
   compact?: boolean;
 };
@@ -21,6 +26,7 @@ export function CreateThreadCard({
   tenantSlug,
   workspaceSlug,
   projects,
+  agents = [],
   defaultProjectId = null,
   compact = false,
 }: CreateThreadCardProps) {
@@ -28,6 +34,7 @@ export function CreateThreadCard({
   const { pushToast } = useWorkspaceFeedback();
   const [title, setTitle] = useState("");
   const [projectId, setProjectId] = useState(defaultProjectId ?? "");
+  const [agentId, setAgentId] = useState("");
   const [showDetails, setShowDetails] = useState(Boolean(defaultProjectId));
   const [isSaving, setIsSaving] = useState(false);
 
@@ -43,6 +50,7 @@ export function CreateThreadCard({
       body: JSON.stringify({
         title,
         projectId: showDetails && projectId ? projectId : null,
+        agentId: agentId || null,
       }),
     });
 
@@ -97,6 +105,18 @@ export function CreateThreadCard({
             </select>
           </label>
         ) : null}
+
+        <label>
+          <span className="field-label">Agent</span>
+          <select value={agentId} onChange={(event) => setAgentId(event.target.value)}>
+            <option value="">No agent</option>
+            {agents.map((agent) => (
+              <option key={agent.id} value={agent.id}>
+                {agent.name}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <button className="button-primary" type="submit" disabled={isSaving}>
           {isSaving ? "Creating..." : "Create thread"}

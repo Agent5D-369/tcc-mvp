@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { createOpenRouterChat, resolveTenantOpenRouterKey } from "@workspace-kit/ai-core";
 import { db, schema } from "@workspace-kit/db";
 
@@ -192,6 +192,7 @@ export async function extractInteractionProposals(args: {
   workspaceId: string;
   userId: string;
   interactionId: string;
+  agentId?: string | null;
 }) {
   const [interaction] = await db
     .select()
@@ -208,6 +209,30 @@ export async function extractInteractionProposals(args: {
   }
 
   let extracted: ExtractedProposal[] | null = null;
+  let agentPrompt: string | null = null;
+  let agentName: string | null = null;
+
+  if (args.agentId) {
+    const [agent] = await db
+      .select({
+        id: schema.agentDefinitions.id,
+        name: schema.agentDefinitions.name,
+        systemPrompt: schema.agentDefinitions.systemPrompt,
+        toolPolicyJson: schema.agentDefinitions.toolPolicyJson,
+      })
+      .from(schema.agentDefinitions)
+      .where(and(
+        eq(schema.agentDefinitions.id, args.agentId),
+        eq(schema.agentDefinitions.tenantId, args.tenantId),
+        sql`${schema.agentDefinitions.workspaceId} is null or ${schema.agentDefinitions.workspaceId} = ${args.workspaceId}`,
+      ))
+      .limit(1);
+
+    if (agent && (agent.toolPolicyJson as { isActive?: unknown }).isActive !== false) {
+      agentPrompt = agent.systemPrompt;
+      agentName = agent.name;
+    }
+  }
 
   try {
     const runtime = await resolveTenantOpenRouterKey(args.tenantId);
@@ -219,12 +244,13 @@ export async function extractInteractionProposals(args: {
           {
             role: "system",
             content: [
+              agentPrompt ? `Selected Agent: ${agentName}\n${agentPrompt}` : null,
               "You extract operational proposals for Team Command Center.",
               "Return JSON only with a top-level proposals array.",
               "Allowed targetType values: task, decision, compiled_page, memory, open_question.",
               "Every proposal must include title, bodyMarkdown, sourceExcerpt, confidenceBps, and proposedPatchJson.",
               "Do not create final writes. These are approval inbox proposals only.",
-            ].join("\n"),
+            ].filter(Boolean).join("\n\n"),
           },
           {
             role: "user",
@@ -245,7 +271,7 @@ export async function extractInteractionProposals(args: {
       projectId: interaction.projectId,
       threadId: null,
       userId: args.userId,
-      agentId: null,
+      agentId: args.agentId || null,
       provider: completion.provider || "openrouter",
       modelName: completion.model || runtime.model,
       inputTokens: Number(usage.prompt_tokens || usage.input_tokens || 0),

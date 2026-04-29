@@ -8,6 +8,7 @@ const createThreadSchema = z.object({
   title: z.string().trim().min(2).max(160),
   threadType: z.enum(["general", "project", "meeting", "agent_run", "prompt_lab"]).optional(),
   projectId: z.string().uuid().nullable().optional(),
+  agentId: z.string().uuid().nullable().optional(),
   pinned: z.boolean().optional(),
 });
 
@@ -72,6 +73,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (body.agentId) {
+      const [agent] = await db
+        .select({ id: schema.agentDefinitions.id })
+        .from(schema.agentDefinitions)
+        .where(and(
+          eq(schema.agentDefinitions.id, body.agentId),
+          eq(schema.agentDefinitions.tenantId, ctx.tenantId),
+          sql`${schema.agentDefinitions.workspaceId} is null or ${schema.agentDefinitions.workspaceId} = ${ctx.workspaceId}`,
+        ))
+        .limit(1);
+
+      if (!agent) {
+        return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+      }
+    }
+
     const [thread] = await db
       .insert(schema.threads)
       .values({
@@ -79,8 +96,9 @@ export async function POST(req: NextRequest) {
         workspaceId: ctx.workspaceId,
         projectId: body.projectId ?? null,
         title: body.title,
-        threadType: body.projectId ? "project" : (body.threadType ?? "general"),
+        threadType: body.agentId ? "agent_run" : body.projectId ? "project" : (body.threadType ?? "general"),
         createdBy: ctx.userId,
+        agentId: body.agentId ?? null,
         pinned: body.pinned ?? false,
       })
       .returning({

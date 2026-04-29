@@ -470,6 +470,18 @@ select {
   gap: 8px;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
 .form-grid input,
 .form-grid textarea,
 .form-grid select {
@@ -484,6 +496,10 @@ select {
 .form-grid textarea {
   resize: vertical;
   min-height: 110px;
+}
+
+.form-grid .checkbox-row input {
+  width: auto;
 }
 
 .field-hint-row {

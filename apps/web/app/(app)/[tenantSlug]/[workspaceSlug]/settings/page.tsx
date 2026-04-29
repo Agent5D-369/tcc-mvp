@@ -172,6 +172,20 @@ export default async function SettingsPage({ params }: PageProps) {
               Open AI settings
             </Link>
           </section>
+          <section className="card">
+            <div className="section-heading">
+              <div>
+                <div className="kicker">Agent MD</div>
+                <h2 className="section-title">Agent library</h2>
+              </div>
+            </div>
+            <p className="empty-note">
+              Create Markdown agents and choose where they can help: capture, threads, projects, tasks, meetings, and memory.
+            </p>
+            <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/settings/agents`}>
+              Open agent library
+            </Link>
+          </section>
           <CreateWorkspaceCard
             canManage={canManage}
             workspaceCount={workspaceCount}

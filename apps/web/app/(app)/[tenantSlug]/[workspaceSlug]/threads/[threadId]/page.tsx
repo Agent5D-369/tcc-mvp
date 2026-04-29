@@ -98,6 +98,10 @@ export default async function ThreadDetailPage({ params }: PageProps) {
               <div className="muted">{data.thread.projectName || "No linked project"}</div>
             </li>
             <li>
+              <strong>Agent</strong>
+              <div className="muted">{data.thread.agentName || "No agent selected"}</div>
+            </li>
+            <li>
               <strong>Latest activity</strong>
               <div className="muted">{data.thread.updatedAt ? new Date(data.thread.updatedAt).toLocaleString() : "No activity yet"}</div>
             </li>
