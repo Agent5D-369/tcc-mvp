@@ -175,6 +175,21 @@ textarea {
   font-size: 0.92rem;
 }
 
+.account-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.account-link-row a {
+  color: var(--danger);
+  text-decoration: none;
+}
+
 .workspace-header-actions {
   display: grid;
   gap: 8px;
@@ -627,6 +642,12 @@ textarea {
 .empty-note {
   color: var(--muted);
   margin: 0;
+}
+
+.empty-action {
+  display: grid;
+  gap: 12px;
+  align-items: start;
 }
 
 .embedded-form {

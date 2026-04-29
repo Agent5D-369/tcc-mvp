@@ -34,6 +34,10 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
             <span className="eyebrow">QuickLaunch Team Command Center</span>
             <h1>{shell.currentWorkspace.workspaceName}</h1>
             <p>{shell.currentWorkspace.workspaceDescription || "Run projects, tasks, meetings, and decisions from one command surface."}</p>
+            <div className="account-link-row">
+              <span>{session.user.email}</span>
+              <a href="/api/auth/signout?callbackUrl=/signin">Sign out</a>
+            </div>
           </div>
           <div className="workspace-header-actions">
             <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/meetings`}>

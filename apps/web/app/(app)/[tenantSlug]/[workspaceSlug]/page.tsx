@@ -271,12 +271,27 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
                 ))}
               </ul>
             ) : (
-              <p className="empty-note">No open tasks in this workspace.</p>
+              <div className="empty-action">
+                <p className="empty-note">No open tasks in this workspace.</p>
+                <div className="meta-row">
+                  <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/projects`}>
+                    Create project first
+                  </Link>
+                  <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/capture`}>
+                    Extract from notes
+                  </Link>
+                </div>
+              </div>
             )}
           </section>
 
           <section className="card">
-            <h2>Active projects</h2>
+            <div className="card-header-row">
+              <h2>Active projects</h2>
+              <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/projects`}>
+                Create
+              </Link>
+            </div>
             {data.activeProjects.length ? (
               <ul className="list">
                 {data.activeProjects.map((project) => (
@@ -297,7 +312,12 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
                 ))}
               </ul>
             ) : (
-              <p className="empty-note">No active projects yet.</p>
+              <div className="empty-action">
+                <p className="empty-note">No active projects yet.</p>
+                <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/projects`}>
+                  Create first project
+                </Link>
+              </div>
             )}
           </section>
         </div>
@@ -306,7 +326,12 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
           <CreateProjectLauncher tenantSlug={route.tenantSlug} workspaceSlug={route.workspaceSlug} />
 
           <section className="card">
-            <h2>Recent decisions</h2>
+            <div className="card-header-row">
+              <h2>Recent decisions</h2>
+              <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/projects`}>
+                Log decision
+              </Link>
+            </div>
             {data.recentDecisions.length ? (
               <ul className="list">
                 {data.recentDecisions.map((decision) => (
@@ -320,12 +345,23 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
                 ))}
               </ul>
             ) : (
-              <p className="empty-note">No decisions logged yet.</p>
+              <div className="empty-action">
+                <p className="empty-note">No decisions logged yet.</p>
+                <p className="muted">Decisions are logged inside project rooms so they stay tied to real work.</p>
+                <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/projects`}>
+                  Open project rooms
+                </Link>
+              </div>
             )}
           </section>
 
           <section className="card">
-            <h2>Recent meetings</h2>
+            <div className="card-header-row">
+              <h2>Recent meetings</h2>
+              <Link className="button-secondary" href={`/${route.tenantSlug}/${route.workspaceSlug}/meetings`}>
+                Capture
+              </Link>
+            </div>
             {data.recentMeetings.length ? (
               <ul className="list">
                 {data.recentMeetings.map((meeting) => (
@@ -339,7 +375,12 @@ export default async function WorkspaceHomePage({ params }: PageProps) {
                 ))}
               </ul>
             ) : (
-              <p className="empty-note">No meetings captured yet.</p>
+              <div className="empty-action">
+                <p className="empty-note">No meetings captured yet.</p>
+                <Link className="button-primary" href={`/${route.tenantSlug}/${route.workspaceSlug}/meetings`}>
+                  Capture first meeting
+                </Link>
+              </div>
             )}
           </section>
         </aside>
